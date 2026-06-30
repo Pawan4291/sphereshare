@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  background: #000;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 107, 0, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 107, 0, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 107, 0, 0.5);
+}
+
+/* Custom input date/time color fix */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) sepia(1) saturate(5) hue-rotate(-10deg);
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+/* Selection */
+::selection {
+  background: rgba(255, 107, 0, 0.3);
+  color: #fff;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid rgba(249, 115, 22, 0.6);
+  outline-offset: 2px;
+}
