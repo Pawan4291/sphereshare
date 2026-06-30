@@ -416,8 +416,8 @@ export default function LandingPage() {
       </footer>
 
       <AnimatePresence>
-        {showWallet && <WalletConnect onClose={() => setShowWallet(false)} />}
-      </AnimatePresence>
+  {showWallet && <WalletConnect onClose={() => { setShowWallet(false); navigate('/home'); }} />}
+</AnimatePresence>
     </div>
   );
 }
