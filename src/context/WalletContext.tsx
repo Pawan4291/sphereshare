@@ -90,7 +90,7 @@ const id = result.identity;
 
   const disconnect = useCallback(async () => {
     if (disconnectRef.current) {
-      await disconnectFromSphere(disconnectRef.current);
+      if (disconnectRef.current) await disconnectRef.current();
     }
     setConnected(false);
     setIdentity(null);

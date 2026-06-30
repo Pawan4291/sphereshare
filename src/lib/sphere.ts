@@ -21,7 +21,7 @@ export { ERROR_CODES, ConnectError, WALLET_EVENTS };
 export type SphereClient = ConnectClient;
 
 const DAPP = { name: 'SphereShare', description: 'Split bills and bulk payouts on Unicity testnet2', url: location.origin };
-
+const PERMISSIONS: PermissionScope[] = ['balance:read','tokens:read','resolve:peer','transfer:request','payment:request','dm:request','events:subscribe','sign:request'];
 export function getErrorMessage(code: number): string {
   switch (code) {
     case ERROR_CODES.INCOMPATIBLE_NETWORK: return 'Your Sphere wallet is on the wrong network. Please switch to testnet2.';
@@ -98,7 +98,8 @@ export async function connectToSphere(silent = false): Promise<{
       transport,
       dapp: DAPP,
       network: SPHERE_NETWORKS.testnet2,
-      silent,
+silent,
+permissions: PERMISSIONS,
       resumeSessionId: savedSession ?? undefined,
     });
     clientRef = client;
@@ -117,7 +118,8 @@ export async function connectToSphere(silent = false): Promise<{
     transport,
     dapp: DAPP,
     network: SPHERE_NETWORKS.testnet2,
-    silent,
+silent,
+permissions: PERMISSIONS,
   });
   clientRef = client;
   const result = await client.connect();
