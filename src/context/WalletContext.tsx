@@ -43,7 +43,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const result = await connectToSphere(silent);
-      const id = result.connection.identity;
+const id = result.identity;
 
       setConnected(true);
       setIdentity({
