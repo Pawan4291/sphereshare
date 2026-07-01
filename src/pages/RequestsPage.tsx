@@ -46,7 +46,9 @@ export default function RequestsPage() {
         txnHash: (result as any)?.txnHash ?? (result as any)?.hash ?? undefined,
       });
       if (identity?.address) {
-        const data = await getMemberSplits(identity.address);
+        const resolved = await client?.query('sphere_resolve', { identifier: identity.address });
+const addr = (resolved as any)?.address ?? identity.address;
+const data = await getMemberSplits(addr);
         setRequests(data);
       }
     } catch (err: any) {
