@@ -196,11 +196,7 @@ export default function CreateSplitForm({ mode }: Props) {
         }
       }
 
-      if (mode === 'split' && client) {
-        if (!confirm(`Send payment requests to ${validRecipients.length} recipient(s)?`)) {
-          setCreatedId(split.id);
-          return;
-        }
+     if (mode === 'split' && client) {
         for (const member of memberData) {
           try {
             await client.intent('payment_request', {
