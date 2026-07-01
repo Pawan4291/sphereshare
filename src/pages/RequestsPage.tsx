@@ -19,7 +19,7 @@ export default function RequestsPage() {
   useEffect(() => {
     if (!identity?.address) return;
     const load = async () => {
-      const data = await getMemberSplits(identity.address);
+     const data = await getMemberSplits(identity.nametag ?? identity.address);
       setRequests(data);
     };
     load();

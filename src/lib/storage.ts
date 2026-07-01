@@ -124,7 +124,7 @@ export async function getSplitMembers(splitId: string): Promise<SplitMember[]> {
 export async function getMemberSplits(walletAddress: string): Promise<{ split: Split; member: SplitMember }[]> {
   const { data, error } = await supabase
     .from('split_members').select('*, splits(*)')
-    .eq('wallet_address', walletAddress);
+    .ilike('wallet_address', walletAddress);
   if (error) throw error;
   return (data ?? []).map((row: any) => ({
     split: rowToSplit(row.splits),
