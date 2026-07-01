@@ -115,9 +115,12 @@ function SplitCard({ split }: { split: Split }) {
                 )}
                {split.status === 'open' && (
   <motion.button onClick={async () => {
-    await import('../lib/storage').then(s => s.updateSplitStatus(split.id, 'expired'));
-    window.location.reload();
-  }}
+  const { updateSplitStatus } = await import('../lib/storage');
+  await updateSplitStatus(split.id, 'expired');
+  const [m, p] = await Promise.all([getSplitMembers(split.id), getSplitPayments(split.id)]);
+  setMembers(m);
+  setPayments(p);
+}}
     className="px-4 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-semibold border border-red-500/20 hover:bg-red-500/25"
     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>🚫 Cancel Split</motion.button>
 )}

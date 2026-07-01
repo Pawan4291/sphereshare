@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
 import TokenSelector from './TokenSelector';
 import { SUPPORTED_TOKENS, parseTokenAmount, type TokenInfo } from '../lib/tokens';
-import { createSplit, addMembers } from '../lib/storage';
+import { createSplit, addMembers, updateSplitStatus } from '../lib/storage';
 import { parseCSV } from '../lib/csv';
 import type { RecipientRow, AppMode } from '../types';
 import { getErrorMessage, ERROR_CODES } from '../lib/sphere';
+
 
 interface Props {
   mode: AppMode;
@@ -196,22 +197,24 @@ export default function CreateSplitForm({ mode }: Props) {
         }
       }
 
-     if (mode === 'split' && client) {
-        for (const member of memberData) {
-          try {
-            await client.intent('payment_request', {
+   let cancelled = false;
+if (mode === 'split' && client) {
+  for (const member of memberData) {
+    try {
+      await client.intent('payment_request', {
               to: member.walletAddress,
               amount: member.amountOwed.toString(),
               coinId: token.coinId,
               message: `Your share of "${title || 'Group Split'}" — ${(Number(member.amountOwed) / 10 ** token.decimals).toFixed(6)} ${token.symbol}`,
             });
-          } catch {
-            // Non-fatal
-          }
+          } catch (e: any) {
+  if (e?.code === ERROR_CODES.USER_REJECTED || e?.code === ERROR_CODES.INTENT_CANCELLED) { cancelled = true; break; }
+}
         }
       }
 
-      setCreatedId(split.id);
+     if (!cancelled) setCreatedId(split.id);
+      else { await updateSplitStatus(split.id, 'expired'); setError('Split cancelled.'); }
     } catch (err: any) {
       const code = (err as { code?: number })?.code;
       setError(code ? getErrorMessage(code) : err?.message ?? 'Failed to create. Please try again.');
