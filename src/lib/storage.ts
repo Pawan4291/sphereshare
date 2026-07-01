@@ -122,9 +122,10 @@ export async function getSplitMembers(splitId: string): Promise<SplitMember[]> {
 }
 
 export async function getMemberSplits(walletAddress: string): Promise<{ split: Split; member: SplitMember }[]> {
+  const tag = walletAddress.startsWith('@') ? walletAddress : `@${walletAddress}`;
   const { data, error } = await supabase
     .from('split_members').select('*, splits(*)')
-    .ilike('wallet_address', walletAddress);
+    .or(`wallet_address.eq.${walletAddress},wallet_address.eq.${tag}`);
   if (error) throw error;
   return (data ?? []).map((row: any) => ({
     split: rowToSplit(row.splits),
