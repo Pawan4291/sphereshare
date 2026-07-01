@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
 import TokenSelector from './TokenSelector';
 import { SUPPORTED_TOKENS, parseTokenAmount, type TokenInfo } from '../lib/tokens';
-import { createSplit, addMembers, updateSplitStatus } from '../lib/storage';
+import { createSplit, addMembers, updateSplitStatus, deleteSplit } from '../lib/storage';
 import { parseCSV } from '../lib/csv';
 import type { RecipientRow, AppMode } from '../types';
 import { getErrorMessage, ERROR_CODES } from '../lib/sphere';
@@ -214,7 +214,7 @@ if (mode === 'split' && client) {
       }
 
      if (!cancelled) setCreatedId(split.id);
-      else { await updateSplitStatus(split.id, 'expired'); setError('Split cancelled.'); }
+     else { await deleteSplit(split.id); setError('Split cancelled — no requests were sent.'); }
     } catch (err: any) {
       const code = (err as { code?: number })?.code;
       setError(code ? getErrorMessage(code) : err?.message ?? 'Failed to create. Please try again.');

@@ -34,6 +34,11 @@ export async function createSplit(data: Omit<Split, 'id' | 'createdAt'>): Promis
   return rowToSplit(row);
 }
 
+export async function deleteSplit(id: string): Promise<void> {
+  await supabase.from('split_members').delete().eq('split_id', id);
+  await supabase.from('splits').delete().eq('id', id);
+}
+
 export async function getSplit(id: string): Promise<Split | null> {
   const { data, error } = await supabase.from('splits').select('*').eq('id', id).single();
   if (error || !data) return null;
