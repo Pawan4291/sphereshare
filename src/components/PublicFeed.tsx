@@ -20,12 +20,14 @@ export default function PublicFeed() {
   const [items, setItems] = useState<PublicFeedItem[]>([]);
 
   useEffect(() => {
-    setItems(getPublicFeed().slice(0, 8));
-    const interval = setInterval(() => {
-      setItems(getPublicFeed().slice(0, 8));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const load = async () => {
+    const data = await getPublicFeed();
+    setItems(data.slice(0, 8));
+  };
+  load();
+  const interval = setInterval(load, 5000);
+  return () => clearInterval(interval);
+}, []);
 
   if (items.length === 0) return null;
 
