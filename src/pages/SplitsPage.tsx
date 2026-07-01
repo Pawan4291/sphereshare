@@ -26,7 +26,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-function SplitCard({ split }: { split: Split }) {
+function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const [members, setMembers] = useState<SplitMember[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -128,8 +128,8 @@ function SplitCard({ split }: { split: Split }) {
 {split.status === 'expired' && (
   <motion.button onClick={async () => {
     const { deleteSplit } = await import('../lib/storage');
-    await deleteSplit(split.id);
-    window.location.reload();
+   await deleteSplit(split.id);
+    onRemove(split.id);
   }}
     className="px-4 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-semibold border border-red-500/20 hover:bg-red-500/25"
     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>🗑️ Delete</motion.button>
@@ -188,7 +188,7 @@ export default function SplitsPage() {
             <a href="/home" className="text-orange-400 hover:text-orange-300 text-sm">Create your first one →</a>
           </motion.div>
         ) : (
-          <div className="space-y-4">{filtered.map((split) => <SplitCard key={split.id} split={split} />)}</div>
+<div className="space-y-4">{filtered.map((split) => <SplitCard key={split.id} split={split} onRemove={(id) => setSplits(prev => prev.filter(s => s.id !== id))} />)}</div>
         )}
       </div>
     </div>
