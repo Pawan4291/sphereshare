@@ -124,6 +124,16 @@ function SplitCard({ split }: { split: Split }) {
     className="px-4 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-semibold border border-red-500/20 hover:bg-red-500/25"
     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>🚫 Cancel Split</motion.button>
 )}
+
+{split.status === 'expired' && (
+  <motion.button onClick={async () => {
+    const { deleteSplit } = await import('../lib/storage');
+    await deleteSplit(split.id);
+    window.location.reload();
+  }}
+    className="px-4 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-semibold border border-red-500/20 hover:bg-red-500/25"
+    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>🗑️ Delete</motion.button>
+)}
 <motion.button onClick={handleExport}
                   className="px-4 py-2 rounded-xl bg-white/5 text-gray-400 text-xs font-semibold border border-white/10 hover:bg-white/10"
                   whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📄 Export CSV</motion.button>
