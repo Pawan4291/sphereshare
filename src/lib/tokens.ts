@@ -1,35 +1,18 @@
-/**
- * Token registry for SphereShare.
- * CoinIds are the canonical lowercase 64-hex identifiers for Unicity testnet2.
- * 
- * NOTE: These coinIds are sourced from the unicity-ids repository and the
- * sphere-sdk source. They represent the L3 network assets on Unicity testnet2.
- * Verify at: https://github.com/unicitynetwork/unicity-ids
- * 
- * UCT: Unicity's native token (18 decimals)
- * The pattern used is that UCT uses all-1s as coinId (the canonical testnet UCT coinId)
- * Others are SHA-256 derived from the external asset symbol + "testnet2"
- */
-
 export interface TokenInfo {
   symbol: string;
   name: string;
-  coinId: string; // lowercase 64-hex, as required by Sphere SDK
+  coinId: string;
   decimals: number;
   icon: string;
   color: string;
   bgColor: string;
 }
 
-// These coinIds are the canonical Unicity testnet2 L3 asset identifiers.
-// UCT uses the well-known testnet2 coinId (all 1s = native/UCT on testnet).
-// For SOL, BTC, ETH: these are the wrapped/bridged L3 asset coinIds registered
-// in the unicity-ids registry for testnet2.
 export const SUPPORTED_TOKENS: TokenInfo[] = [
   {
     symbol: 'UCT',
     name: 'Unicity',
-    coinId: '1111111111111111111111111111111111111111111111111111111111111111',
+    coinId: 'f581d30f593e4b369d684a4563b5246f07b1d265f7178a2c0a82b81f39c24dc0',
     decimals: 18,
     icon: '⬡',
     color: '#FF6B00',
@@ -38,7 +21,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
   {
     symbol: 'SOL',
     name: 'Solana',
-    coinId: '2222222222222222222222222222222222222222222222222222222222222222',
+    coinId: '72f7771d5690afcf89cfc16e8ee8c1a836d0faa8ed1b34d527aabc18acb949ae',
     decimals: 9,
     icon: '◎',
     color: '#9945FF',
@@ -47,7 +30,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
   {
     symbol: 'BTC',
     name: 'Bitcoin',
-    coinId: '3333333333333333333333333333333333333333333333333333333333333333',
+    coinId: '3cc412d8a24510d424f74de4c471d22298b7f52625af6fd3ecb3c3d9e1a683fb',
     decimals: 8,
     icon: '₿',
     color: '#F7931A',
@@ -56,11 +39,20 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
   {
     symbol: 'ETH',
     name: 'Ethereum',
-    coinId: '4444444444444444444444444444444444444444444444444444444444444444',
+    coinId: '746a4e75aeb3221462f762fc41925735983c6039e89288bbb632a8fb1012e7d0',
     decimals: 18,
     icon: 'Ξ',
     color: '#627EEA',
     bgColor: 'rgba(98,126,234,0.15)',
+  },
+  {
+    symbol: 'USDU',
+    name: 'Unicity USD',
+    coinId: 'e210f98956f564bfe67ee94fddd386b5157f660d1957169b391f962093a2da2a',
+    decimals: 6,
+    icon: '$',
+    color: '#26A17B',
+    bgColor: 'rgba(38,161,123,0.15)',
   },
 ];
 
@@ -72,49 +64,24 @@ export const TOKEN_BY_SYMBOL: Record<string, TokenInfo> = Object.fromEntries(
   SUPPORTED_TOKENS.map((t) => [t.symbol, t])
 );
 
-/**
- * Convert a human-readable amount string to base units (bigint) for the given token.
- * E.g.: parseTokenAmount('1.5', 18) → 1500000000000000000n
- * 
- * This is the canonical conversion — never do manual decimal math elsewhere.
- */
 export function parseTokenAmount(humanAmount: string, decimals: number): bigint {
   if (!humanAmount || humanAmount === '') return 0n;
-
   const trimmed = humanAmount.trim();
   const dotIndex = trimmed.indexOf('.');
-
-  if (dotIndex === -1) {
-    // Integer
-    return BigInt(trimmed) * BigInt(10 ** decimals);
-  }
-
+  if (dotIndex === -1) return BigInt(trimmed) * BigInt(10 ** decimals);
   const intPart = trimmed.slice(0, dotIndex) || '0';
   let fracPart = trimmed.slice(dotIndex + 1);
-
-  // Truncate or pad fractional part to `decimals` digits
-  if (fracPart.length > decimals) {
-    fracPart = fracPart.slice(0, decimals);
-  } else {
-    fracPart = fracPart.padEnd(decimals, '0');
-  }
-
+  if (fracPart.length > decimals) fracPart = fracPart.slice(0, decimals);
+  else fracPart = fracPart.padEnd(decimals, '0');
   return BigInt(intPart) * BigInt(10 ** decimals) + BigInt(fracPart);
 }
 
-/**
- * Format base-unit amount to human-readable string.
- * E.g.: formatTokenAmount(1500000000000000000n, 18) → '1.5'
- */
 export function formatTokenAmount(baseAmount: bigint, decimals: number, maxDecimals = 6): string {
   if (baseAmount === 0n) return '0';
-
   const divisor = BigInt(10 ** decimals);
   const intPart = baseAmount / divisor;
   const fracPart = baseAmount % divisor;
-
   if (fracPart === 0n) return intPart.toString();
-
   const fracStr = fracPart.toString().padStart(decimals, '0');
   const trimmed = fracStr.slice(0, maxDecimals).replace(/0+$/, '');
   return trimmed ? `${intPart}.${trimmed}` : intPart.toString();
