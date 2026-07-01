@@ -35,22 +35,19 @@ export default function CreateSplitForm({ mode }: Props) {
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [balances, setBalances] = useState<Record<string, string>>({});
 
-  const fetchBalances = useCallback(async () => {
-    if (!client) return;
-    try {
-      const bal = await client.query('sphere_getBalance');
-      const balArr = Array.isArray(bal) ? bal : Object.values(bal ?? {});
+ const fetchBalances = useCallback(async () => {
+  if (!client) return;
+  try {
+    const bal = await client.query('sphere_getBalance');
+    if (Array.isArray(bal)) {
       const map: Record<string, string> = {};
-      for (const item of balArr) {
-        if (item.coinId && item.balance !== undefined) {
-          map[item.coinId] = item.balance;
-        }
+      for (const item of bal) {
+        if (item.coinId && item.balance !== undefined) map[item.coinId] = item.balance;
       }
       setBalances(map);
-    } catch {
-      // ignore
     }
-  }, [client]);
+  } catch { }
+}, [client]);
 
   useState(() => { fetchBalances(); });
 
