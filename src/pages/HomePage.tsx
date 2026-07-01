@@ -165,34 +165,7 @@ export default function HomePage() {
               </div>
             </motion.div>
 
-            {/* Agent Status */}
-            <motion.div
-              className="p-5 rounded-2xl border border-orange-500/20"
-              style={{ background: 'rgba(15,8,0,0.6)' }}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <h3 className="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">🤖 Astrid Agent</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-xs text-gray-400">Running — 60s loop</span>
-                </div>
-                {[
-                  'Sends DM reminders every 24h',
-                  'Detects incoming payments',
-                  'Auto-settles when all paid',
-                  'Updates leaderboard per token',
-                  'Retries failures (max 3×)',
-                ].map((feat, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-orange-500 text-xs mt-0.5">▸</span>
-                    <span className="text-xs text-gray-500">{feat}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
+        
 
             {/* Public Feed */}
             <PublicFeed />
