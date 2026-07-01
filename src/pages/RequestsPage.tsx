@@ -23,6 +23,7 @@ export default function RequestsPage() {
       setRequests(data);
     };
     load();
+    client?.on('transfer:incoming', () => load());
   }, [identity?.address]);
 
   const handlePay = async (item: RequestItem) => {

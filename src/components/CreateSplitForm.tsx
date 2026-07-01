@@ -35,7 +35,6 @@ export default function CreateSplitForm({ mode }: Props) {
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [balances, setBalances] = useState<Record<string, string>>({});
 
-  // Fetch balances when connected
   const fetchBalances = useCallback(async () => {
     if (!client) return;
     try {
@@ -50,14 +49,14 @@ export default function CreateSplitForm({ mode }: Props) {
         setBalances(map);
       }
     } catch {
-      // ignore balance fetch errors
+      // ignore
     }
   }, [client]);
 
   useState(() => { fetchBalances(); });
 
   const validateAddress = useCallback(async (addr: string): Promise<boolean> => {
-    if (!client) return true; // can't validate without client, allow
+    if (!client) return true;
     try {
       const res = await client.query('sphere_resolve', { identifier: addr });
       return !!res;
@@ -76,7 +75,6 @@ export default function CreateSplitForm({ mode }: Props) {
     setRecipients((prev) => [...prev, row]);
     setNewWallet('');
     setNewAmount('');
-
     const valid = await validateAddress(row.wallet);
     setRecipients((prev) =>
       prev.map((r) =>
@@ -102,8 +100,6 @@ export default function CreateSplitForm({ mode }: Props) {
     setRecipients((prev) => [...prev, ...newRows]);
     setCsvText('');
     setShowCSV(false);
-
-    // Validate each
     for (const row of newRows) {
       const valid = await validateAddress(row.wallet);
       setRecipients((prev) =>
@@ -137,13 +133,11 @@ export default function CreateSplitForm({ mode }: Props) {
       setError('Please connect your wallet first.');
       return;
     }
-
     const validRecipients = recipients.filter((r) => r.status === 'valid');
     if (validRecipients.length === 0) {
       setError('Please add at least one valid recipient.');
       return;
     }
-
     const totalHuman = distribution === 'equal' ? totalAmount : totalCustomAmount();
     if (!totalHuman || parseFloat(totalHuman) <= 0) {
       setError('Please enter a valid total amount.');
@@ -156,8 +150,7 @@ export default function CreateSplitForm({ mode }: Props) {
     try {
       const totalBase = parseTokenAmount(totalHuman, token.decimals);
 
-      // Create the split record
-      const split = createSplit({
+      const split = await createSplit({
         mode,
         title: title || (mode === 'split' ? 'Group Split' : 'Bulk Payout'),
         coinId: token.coinId,
@@ -170,7 +163,6 @@ export default function CreateSplitForm({ mode }: Props) {
         requireApproval,
       });
 
-      // Add members
       const memberData = validRecipients.map((r) => {
         let amount: bigint;
         if (distribution === 'equal') {
@@ -188,9 +180,8 @@ export default function CreateSplitForm({ mode }: Props) {
           retryCount: 0,
         };
       });
-      addMembers(memberData);
+      await addMembers(memberData);
 
-      // For payout mode: send payments immediately via Sphere
       if (mode === 'payout' && client && !requireApproval) {
         for (const member of memberData) {
           try {
@@ -202,26 +193,28 @@ export default function CreateSplitForm({ mode }: Props) {
           } catch (payErr: any) {
             const code = (payErr as { code?: number })?.code;
             if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) {
-              break; // User cancelled, stop sending
+              break;
             }
-            // Log and continue for other errors (agent will retry)
             console.error(`Payment to ${member.walletAddress} failed:`, payErr);
           }
         }
       }
 
-      // For split mode: send payment requests
       if (mode === 'split' && client) {
+        if (!confirm(`Send payment requests to ${validRecipients.length} recipient(s)?`)) {
+          setCreatedId(split.id);
+          return;
+        }
         for (const member of memberData) {
           try {
             await client.intent('payment_request', {
               to: member.walletAddress,
               amount: member.amountOwed.toString(),
               coinId: token.coinId,
-              message: `Your share of "${split.title}" — ${member.amountOwed.toString()} ${token.symbol} (base units)`,
+              message: `Your share of "${title || 'Group Split'}" — ${(Number(member.amountOwed) / 10 ** token.decimals).toFixed(6)} ${token.symbol}`,
             });
           } catch {
-            // Non-fatal — agent will send reminders
+            // Non-fatal
           }
         }
       }
@@ -252,7 +245,6 @@ export default function CreateSplitForm({ mode }: Props) {
             ? 'Share the link below with your group. The Astrid agent will track payments automatically.'
             : 'Payments have been dispatched. The Astrid agent will monitor and retry any failures.'}
         </p>
-
         {mode === 'split' && (
           <div className="mb-6">
             <div className="text-xs text-gray-500 mb-2">Shareable join link:</div>
@@ -269,7 +261,6 @@ export default function CreateSplitForm({ mode }: Props) {
             </div>
           </div>
         )}
-
         <div className="flex gap-3 justify-center flex-wrap">
           <motion.button
             onClick={() => navigate('/splits')}
@@ -280,12 +271,7 @@ export default function CreateSplitForm({ mode }: Props) {
             View My Splits
           </motion.button>
           <motion.button
-            onClick={() => {
-              setCreatedId(null);
-              setTitle('');
-              setRecipients([]);
-              setTotalAmount('');
-            }}
+            onClick={() => { setCreatedId(null); setTitle(''); setRecipients([]); setTotalAmount(''); }}
             className="px-6 py-3 rounded-xl border border-orange-500/30 text-orange-400 font-medium hover:bg-orange-500/10 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -299,7 +285,6 @@ export default function CreateSplitForm({ mode }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Title */}
       <div>
         <label className="block text-sm font-semibold text-gray-300 mb-2">
           {mode === 'split' ? 'What are you splitting?' : 'Payout Description'}
@@ -314,13 +299,11 @@ export default function CreateSplitForm({ mode }: Props) {
         />
       </div>
 
-      {/* Token */}
       <div>
         <label className="block text-sm font-semibold text-gray-300 mb-2">Token</label>
         <TokenSelector selected={token} onChange={setToken} balances={balances} />
       </div>
 
-      {/* Distribution Type */}
       <div>
         <label className="block text-sm font-semibold text-gray-300 mb-2">Distribution</label>
         <div className="flex gap-2 p-1 rounded-xl bg-white/5 border border-orange-500/10">
@@ -330,9 +313,7 @@ export default function CreateSplitForm({ mode }: Props) {
               type="button"
               onClick={() => setDistribution(d)}
               className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                distribution === d
-                  ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20'
-                  : 'text-gray-400 hover:text-white'
+                distribution === d ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-gray-400 hover:text-white'
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -343,7 +324,6 @@ export default function CreateSplitForm({ mode }: Props) {
         </div>
       </div>
 
-      {/* Total Amount (equal mode) */}
       {distribution === 'equal' && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
           <label className="block text-sm font-semibold text-gray-300 mb-2">
@@ -359,29 +339,21 @@ export default function CreateSplitForm({ mode }: Props) {
             className="w-full px-4 py-3 rounded-xl border border-orange-500/20 bg-white/5 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/60 transition-colors"
           />
           {recipients.length > 0 && totalAmount && (
-            <div className="mt-2 text-xs text-orange-400">
-              ≈ {perPersonAmount()} {token.symbol} per person
-            </div>
+            <div className="mt-2 text-xs text-orange-400">≈ {perPersonAmount()} {token.symbol} per person</div>
           )}
         </motion.div>
       )}
 
-      {/* Recipients */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-semibold text-gray-300">
             Recipients ({recipients.filter((r) => r.status !== 'invalid').length})
           </label>
-          <button
-            type="button"
-            onClick={() => setShowCSV(!showCSV)}
-            className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
-          >
+          <button type="button" onClick={() => setShowCSV(!showCSV)} className="text-xs text-orange-400 hover:text-orange-300 transition-colors">
             {showCSV ? '− Hide CSV' : '+ CSV Import'}
           </button>
         </div>
 
-        {/* CSV Input */}
         <AnimatePresence>
           {showCSV && (
             <motion.div
@@ -392,19 +364,13 @@ export default function CreateSplitForm({ mode }: Props) {
             >
               <div className="p-3 rounded-xl bg-white/5 border border-orange-500/10">
                 <p className="text-xs text-gray-500 mb-2">
-                  {distribution === 'equal'
-                    ? 'One wallet address per line'
-                    : 'Format: wallet,amount (one per line)'}
+                  {distribution === 'equal' ? 'One wallet address per line' : 'Format: wallet,amount (one per line)'}
                 </p>
                 <textarea
                   value={csvText}
                   onChange={(e) => setCsvText(e.target.value)}
                   rows={5}
-                  placeholder={
-                    distribution === 'equal'
-                      ? '@alice\n@bob\n0xabc123...'
-                      : '@alice,100\n@bob,250\n0xabc123...,50'
-                  }
+                  placeholder={distribution === 'equal' ? '@alice\n@bob\n0xabc123...' : '@alice,100\n@bob,250\n0xabc123...,50'}
                   className="w-full bg-transparent text-white text-xs font-mono placeholder-gray-600 focus:outline-none resize-none"
                 />
                 <motion.button
@@ -421,7 +387,6 @@ export default function CreateSplitForm({ mode }: Props) {
           )}
         </AnimatePresence>
 
-        {/* Add recipient manually */}
         <div className="flex gap-2 mb-3">
           <input
             type="text"
@@ -453,18 +418,13 @@ export default function CreateSplitForm({ mode }: Props) {
           </motion.button>
         </div>
 
-        {/* Recipient list */}
         <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
           <AnimatePresence>
             {recipients.map((r, i) => (
               <motion.div
                 key={`${r.wallet}-${i}`}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-sm ${
-                  r.status === 'invalid'
-                    ? 'border-red-500/30 bg-red-500/5'
-                    : r.status === 'valid'
-                    ? 'border-green-500/20 bg-green-500/5'
-                    : 'border-orange-500/10 bg-white/3'
+                  r.status === 'invalid' ? 'border-red-500/30 bg-red-500/5' : r.status === 'valid' ? 'border-green-500/20 bg-green-500/5' : 'border-orange-500/10 bg-white/3'
                 }`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -472,63 +432,39 @@ export default function CreateSplitForm({ mode }: Props) {
               >
                 <div className="flex-shrink-0">
                   {r.status === 'checking' || r.status === 'pending' ? (
-                    <motion.div
-                      className="w-4 h-4 border-2 border-orange-500/40 border-t-orange-500 rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-                    />
+                    <motion.div className="w-4 h-4 border-2 border-orange-500/40 border-t-orange-500 rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }} />
                   ) : r.status === 'valid' ? (
                     <span className="text-green-400 text-xs">✓</span>
                   ) : (
                     <span className="text-red-400 text-xs">✗</span>
                   )}
                 </div>
-                <span
-                  className={`flex-1 font-mono truncate ${
-                    r.status === 'invalid' ? 'text-red-400' : 'text-gray-300'
-                  }`}
-                >
+                <span className={`flex-1 font-mono truncate ${r.status === 'invalid' ? 'text-red-400' : 'text-gray-300'}`}>
                   {r.wallet}
                 </span>
                 {distribution === 'custom' && r.amount && (
-                  <span className="text-orange-300 text-xs flex-shrink-0">
-                    {r.amount} {token.symbol}
-                  </span>
+                  <span className="text-orange-300 text-xs flex-shrink-0">{r.amount} {token.symbol}</span>
                 )}
                 {distribution === 'equal' && totalAmount && recipients.length > 0 && (
                   <span className="text-gray-500 text-xs flex-shrink-0">{perPersonAmount()} {token.symbol}</span>
                 )}
-                <button
-                  type="button"
-                  onClick={() => removeRecipient(i)}
-                  className="text-gray-600 hover:text-red-400 transition-colors text-xs flex-shrink-0"
-                >
-                  ✕
-                </button>
+                <button type="button" onClick={() => removeRecipient(i)} className="text-gray-600 hover:text-red-400 transition-colors text-xs flex-shrink-0">✕</button>
               </motion.div>
             ))}
           </AnimatePresence>
           {recipients.length === 0 && (
-            <div className="text-center py-6 text-gray-600 text-sm">
-              Add recipients using the field above or CSV import
-            </div>
+            <div className="text-center py-6 text-gray-600 text-sm">Add recipients using the field above or CSV import</div>
           )}
         </div>
 
         {distribution === 'custom' && recipients.length > 0 && (
-          <div className="mt-2 text-xs text-orange-400 text-right">
-            Total: {totalCustomAmount()} {token.symbol}
-          </div>
+          <div className="mt-2 text-xs text-orange-400 text-right">Total: {totalCustomAmount()} {token.symbol}</div>
         )}
       </div>
 
-      {/* Options Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Deadline */}
         <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Deadline (optional)
-          </label>
+          <label className="block text-sm font-semibold text-gray-300 mb-2">Deadline (optional)</label>
           <input
             type="datetime-local"
             value={deadline}
@@ -536,47 +472,30 @@ export default function CreateSplitForm({ mode }: Props) {
             className="w-full px-4 py-3 rounded-xl border border-orange-500/20 bg-white/5 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
           />
         </div>
-
-        {/* Approval Toggle */}
         <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">
-            Require Manual Approval
-          </label>
+          <label className="block text-sm font-semibold text-gray-300 mb-2">Require Manual Approval</label>
           <motion.button
             type="button"
             onClick={() => setRequireApproval(!requireApproval)}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl border w-full transition-all ${
-              requireApproval
-                ? 'border-orange-500/60 bg-orange-500/15 text-orange-300'
-                : 'border-orange-500/20 bg-white/5 text-gray-400'
+              requireApproval ? 'border-orange-500/60 bg-orange-500/15 text-orange-300' : 'border-orange-500/20 bg-white/5 text-gray-400'
             }`}
             whileHover={{ scale: 1.01 }}
           >
-            <motion.div
-              className={`w-10 h-5 rounded-full flex items-center transition-colors ${
-                requireApproval ? 'bg-orange-500 justify-end' : 'bg-gray-700 justify-start'
-              } px-0.5`}
-            >
+            <motion.div className={`w-10 h-5 rounded-full flex items-center transition-colors ${requireApproval ? 'bg-orange-500 justify-end' : 'bg-gray-700 justify-start'} px-0.5`}>
               <motion.div className="w-4 h-4 rounded-full bg-white" layout />
             </motion.div>
-            <span className="text-sm">
-              {requireApproval ? '🛑 Manual checkpoint' : '🤖 Fully autonomous'}
-            </span>
+            <span className="text-sm">{requireApproval ? '🛑 Manual checkpoint' : '🤖 Fully autonomous'}</span>
           </motion.button>
         </div>
       </div>
 
-      {/* Fee notice */}
       <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/10 text-xs text-gray-500">
         ℹ️ Network fees apply. Exact fee is determined by the Unicity aggregator at submission time.
       </div>
 
       {error && (
-        <motion.div
-          className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           {error}
         </motion.div>
       )}
@@ -590,11 +509,7 @@ export default function CreateSplitForm({ mode }: Props) {
       >
         {submitting ? (
           <div className="flex items-center justify-center gap-2">
-            <motion.div
-              className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-            />
+            <motion.div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }} />
             {mode === 'split' ? 'Creating Split...' : 'Sending Payouts...'}
           </div>
         ) : mode === 'split' ? (
