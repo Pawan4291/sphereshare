@@ -24,6 +24,8 @@ export default function RequestsPage() {
     };
     load();
     client?.on('transfer:incoming', () => load());
+client?.on('payment_request:paid', () => load());
+client?.on('payment_request:declined', () => load());
   }, [identity?.address]);
 
   const handlePay = async (item: RequestItem) => {

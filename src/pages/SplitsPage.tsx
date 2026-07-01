@@ -31,16 +31,20 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
   const [members, setMembers] = useState<SplitMember[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const token = TOKEN_BY_SYMBOL[split.tokenSymbol] ?? TOKEN_BY_COIN_ID[split.coinId];
+  const { client } = useWallet();
+
+  const load = async () => {
+    const [m, p] = await Promise.all([getSplitMembers(split.id), getSplitPayments(split.id)]);
+    setMembers(m);
+    setPayments(p);
+  };
 
   useEffect(() => {
     if (!expanded) return;
-    const load = async () => {
-      const [m, p] = await Promise.all([getSplitMembers(split.id), getSplitPayments(split.id)]);
-      setMembers(m);
-      setPayments(p);
-    };
     load();
-  }, [expanded, split.id]);
+    const unsub = client?.on('transfer:incoming', load);
+    return () => { unsub?.(); };
+  }, [expanded, split.id, client]);
 
   const paidCount = members.filter((m) => m.paid).length;
   const shareUrl = `${window.location.origin}/join/${split.id}`;
