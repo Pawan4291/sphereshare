@@ -12,11 +12,7 @@ function StatusBadge({ status }: { status: Split['status'] }) {
     settled: { color: 'text-green-400 bg-green-500/15 border-green-500/30', label: 'Settled' },
     expired: { color: 'text-gray-400 bg-gray-500/15 border-gray-500/30', label: 'Expired' },
   }[status];
-  return (
-    <span className={`px-2 py-0.5 rounded-lg border text-xs font-semibold ${conf.color}`}>
-      {conf.label}
-    </span>
-  );
+  return <span className={`px-2 py-0.5 rounded-lg border text-xs font-semibold ${conf.color}`}>{conf.label}</span>;
 }
 
 function timeAgo(dateStr: string): string {
@@ -30,21 +26,20 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-interface SplitCardProps {
-  split: Split;
-}
-
-function SplitCard({ split }: SplitCardProps) {
+function SplitCard({ split }: { split: Split }) {
   const [expanded, setExpanded] = useState(false);
   const [members, setMembers] = useState<SplitMember[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const token = TOKEN_BY_SYMBOL[split.tokenSymbol] ?? TOKEN_BY_COIN_ID[split.coinId];
 
   useEffect(() => {
-    if (expanded) {
-      setMembers(getSplitMembers(split.id));
-      setPayments(getSplitPayments(split.id));
-    }
+    if (!expanded) return;
+    const load = async () => {
+      const [m, p] = await Promise.all([getSplitMembers(split.id), getSplitPayments(split.id)]);
+      setMembers(m);
+      setPayments(p);
+    };
+    load();
   }, [expanded, split.id]);
 
   const paidCount = members.filter((m) => m.paid).length;
@@ -52,10 +47,8 @@ function SplitCard({ split }: SplitCardProps) {
 
   const handleExport = () => {
     const rows = payments.map((p) => ({
-      wallet: p.toWallet,
-      amount: formatTokenAmount(p.amount, token?.decimals ?? 18),
-      token: split.tokenSymbol,
-      txn_hash: p.txnHash ?? '',
+      wallet: p.toWallet, amount: formatTokenAmount(p.amount, token?.decimals ?? 18),
+      token: split.tokenSymbol, txn_hash: p.txnHash ?? '',
       status: members.find((m) => m.walletAddress === p.toWallet)?.paid ? 'paid' : 'pending',
       timestamp: new Date(p.createdAt).toISOString(),
     }));
@@ -64,144 +57,65 @@ function SplitCard({ split }: SplitCardProps) {
   };
 
   return (
-    <motion.div
-      className="rounded-2xl border border-orange-500/20 overflow-hidden"
-      style={{ background: 'rgba(15,8,0,0.6)' }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ borderColor: 'rgba(249,115,22,0.4)' }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-start gap-4 p-5 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-          style={{ background: token?.bgColor ?? 'rgba(255,107,0,0.15)' }}
-        >
+    <motion.div className="rounded-2xl border border-orange-500/20 overflow-hidden" style={{ background: 'rgba(15,8,0,0.6)' }}
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} whileHover={{ borderColor: 'rgba(249,115,22,0.4)' }}>
+      <div className="flex items-start gap-4 p-5 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ background: token?.bgColor ?? 'rgba(255,107,0,0.15)' }}>
           {split.mode === 'split' ? '🍕' : '💸'}
         </div>
-
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-bold text-white truncate">{split.title}</h3>
             <StatusBadge status={split.status} />
-            <span className="text-xs px-2 py-0.5 rounded-md bg-white/5 text-gray-500 capitalize">
-              {split.mode}
-            </span>
+            <span className="text-xs px-2 py-0.5 rounded-md bg-white/5 text-gray-500 capitalize">{split.mode}</span>
           </div>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
-            <span className="text-sm font-bold" style={{ color: token?.color ?? '#f97316' }}>
-              {formatTokenAmount(split.totalAmount, token?.decimals ?? 18)} {split.tokenSymbol}
-            </span>
+            <span className="text-sm font-bold" style={{ color: token?.color ?? '#f97316' }}>{formatTokenAmount(split.totalAmount, token?.decimals ?? 18)} {split.tokenSymbol}</span>
             <span className="text-xs text-gray-500">{timeAgo(split.createdAt)}</span>
-            {members.length > 0 && (
-              <span className="text-xs text-gray-500">
-                {paidCount}/{members.length} paid
-              </span>
-            )}
+            {members.length > 0 && <span className="text-xs text-gray-500">{paidCount}/{members.length} paid</span>}
           </div>
         </div>
-
-        <motion.div
-          className="text-gray-500 text-sm flex-shrink-0"
-          animate={{ rotate: expanded ? 180 : 0 }}
-        >
-          ▼
-        </motion.div>
+        <motion.div className="text-gray-500 text-sm flex-shrink-0" animate={{ rotate: expanded ? 180 : 0 }}>▼</motion.div>
       </div>
 
-      {/* Progress bar */}
       {members.length > 0 && (
         <div className="px-5 pb-2">
           <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${(paidCount / members.length) * 100}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-            />
+            <motion.div className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"
+              initial={{ width: 0 }} animate={{ width: `${(paidCount / members.length) * 100}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
           </div>
         </div>
       )}
 
-      {/* Expanded content */}
       <AnimatePresence>
         {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="px-5 pb-5 pt-2 border-t border-orange-500/10 space-y-4">
-              {/* Members list */}
               {members.length > 0 && (
                 <div>
                   <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Recipients</h4>
                   <div className="space-y-2">
                     {members.map((m) => (
-                      <div
-                        key={m.id}
-                        className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
-                          m.paid
-                            ? 'border-green-500/20 bg-green-500/5'
-                            : 'border-orange-500/10 bg-white/3'
-                        }`}
-                      >
-                        <span className={m.paid ? 'text-green-400' : 'text-orange-400'}>
-                          {m.paid ? '✓' : '○'}
-                        </span>
-                        <span className="flex-1 font-mono text-xs text-gray-300 truncate">
-                          {shortenAddress(m.walletAddress)}
-                        </span>
-                        <span className="text-xs" style={{ color: token?.color ?? '#f97316' }}>
-                          {formatTokenAmount(m.amountOwed, token?.decimals ?? 18)} {split.tokenSymbol}
-                        </span>
-                        {m.paid && m.paidAt && (
-                          <span className="text-xs text-gray-600">{timeAgo(m.paidAt)}</span>
-                        )}
-                        {!m.paid && m.reminderCount > 0 && (
-                          <span className="text-xs text-gray-600">
-                            {m.reminderCount} reminder{m.reminderCount > 1 ? 's' : ''} sent
-                          </span>
-                        )}
+                      <div key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${m.paid ? 'border-green-500/20 bg-green-500/5' : 'border-orange-500/10 bg-white/3'}`}>
+                        <span className={m.paid ? 'text-green-400' : 'text-orange-400'}>{m.paid ? '✓' : '○'}</span>
+                        <span className="flex-1 font-mono text-xs text-gray-300 truncate">{shortenAddress(m.walletAddress)}</span>
+                        <span className="text-xs" style={{ color: token?.color ?? '#f97316' }}>{formatTokenAmount(m.amountOwed, token?.decimals ?? 18)} {split.tokenSymbol}</span>
+                        {m.paid && m.paidAt && <span className="text-xs text-gray-600">{timeAgo(m.paidAt)}</span>}
+                        {!m.paid && m.reminderCount > 0 && <span className="text-xs text-gray-600">{m.reminderCount} reminder{m.reminderCount > 1 ? 's' : ''} sent</span>}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-
-              {/* Actions */}
               <div className="flex gap-2 flex-wrap">
                 {split.mode === 'split' && (
-                  <motion.button
-                    onClick={() => navigator.clipboard.writeText(shareUrl)}
-                    className="px-4 py-2 rounded-xl bg-orange-500/15 text-orange-400 text-xs font-semibold border border-orange-500/20 hover:bg-orange-500/25 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    📋 Copy Join Link
-                  </motion.button>
+                  <motion.button onClick={() => navigator.clipboard.writeText(shareUrl)}
+                    className="px-4 py-2 rounded-xl bg-orange-500/15 text-orange-400 text-xs font-semibold border border-orange-500/20 hover:bg-orange-500/25"
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📋 Copy Join Link</motion.button>
                 )}
-                <motion.button
-                  onClick={handleExport}
-                  className="px-4 py-2 rounded-xl bg-white/5 text-gray-400 text-xs font-semibold border border-white/10 hover:bg-white/10 transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  📄 Export CSV
-                </motion.button>
-                {split.requireApproval && split.status === 'open' && (
-                  <motion.button
-                    className="px-4 py-2 rounded-xl bg-green-500/15 text-green-400 text-xs font-semibold border border-green-500/20 hover:bg-green-500/25 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    ✅ Confirm & Send
-                  </motion.button>
-                )}
+                <motion.button onClick={handleExport}
+                  className="px-4 py-2 rounded-xl bg-white/5 text-gray-400 text-xs font-semibold border border-white/10 hover:bg-white/10"
+                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📄 Export CSV</motion.button>
               </div>
             </div>
           </motion.div>
@@ -217,9 +131,12 @@ export default function SplitsPage() {
   const [filter, setFilter] = useState<'all' | 'split' | 'payout'>('all');
 
   useEffect(() => {
-    if (identity?.address) {
-      setSplits(getUserSplits(identity.address));
-    }
+    if (!identity?.address) return;
+    const load = async () => {
+      const data = await getUserSplits(identity.address);
+      setSplits(data);
+    };
+    load();
   }, [identity?.address]);
 
   const filtered = splits.filter((s) => filter === 'all' || s.mode === filter);
@@ -227,32 +144,14 @@ export default function SplitsPage() {
   return (
     <div className="min-h-screen px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <motion.div
-          className="mb-8 flex items-start justify-between flex-wrap gap-4"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div className="mb-8 flex items-start justify-between flex-wrap gap-4" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <div>
-            <h1 className="text-4xl font-black text-white mb-2">
-              My{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
-                Splits & Payouts
-              </span>
-            </h1>
+            <h1 className="text-4xl font-black text-white mb-2">My <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Splits & Payouts</span></h1>
             <p className="text-gray-400">All payment groups you've created.</p>
           </div>
-
           <div className="flex gap-2 p-1 rounded-xl bg-white/5 border border-orange-500/10">
             {(['all', 'split', 'payout'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${
-                  filter === f
-                    ? 'bg-orange-500 text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
+              <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${filter === f ? 'bg-orange-500 text-black' : 'text-gray-400 hover:text-white'}`}>
                 {f === 'all' ? 'All' : f === 'split' ? '🍕 Splits' : '💸 Payouts'}
               </button>
             ))}
@@ -260,28 +159,15 @@ export default function SplitsPage() {
         </motion.div>
 
         {!connected ? (
-          <div className="text-center py-20 text-gray-600">
-            <div className="text-6xl mb-4">🔐</div>
-            <p>Connect your wallet to view your splits.</p>
-          </div>
+          <div className="text-center py-20 text-gray-600"><div className="text-6xl mb-4">🔐</div><p>Connect your wallet to view your splits.</p></div>
         ) : filtered.length === 0 ? (
-          <motion.div
-            className="text-center py-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
+          <motion.div className="text-center py-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="text-6xl mb-4">📭</div>
             <p className="text-gray-500 mb-4">No {filter !== 'all' ? filter + 's' : 'splits or payouts'} yet.</p>
-            <a href="/home" className="text-orange-400 hover:text-orange-300 text-sm">
-              Create your first one →
-            </a>
+            <a href="/home" className="text-orange-400 hover:text-orange-300 text-sm">Create your first one →</a>
           </motion.div>
         ) : (
-          <div className="space-y-4">
-            {filtered.map((split) => (
-              <SplitCard key={split.id} split={split} />
-            ))}
-          </div>
+          <div className="space-y-4">{filtered.map((split) => <SplitCard key={split.id} split={split} />)}</div>
         )}
       </div>
     </div>
