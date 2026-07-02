@@ -85,8 +85,8 @@ const channel = supabase
     }
   };
 
-  const pending = requests.filter((r) => !r.member.paid && r.split.status === 'open');
-  const completed = requests.filter((r) => r.member.paid || r.split.status !== 'open');
+ const pending = requests.filter((r) => !r.member.paid && !r.member.invalidAddress && r.split.status === 'open');
+  const completed = requests.filter((r) => r.member.paid || r.member.invalidAddress || r.split.status !== 'open');
 
   return (
     <div className="min-h-screen px-4 py-8">

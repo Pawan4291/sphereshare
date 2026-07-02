@@ -112,10 +112,13 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
                   <div className="space-y-2">
                     {members.map((m) => (
                       <div key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${m.paid ? 'border-green-500/20 bg-green-500/5' : 'border-orange-500/10 bg-white/3'}`}>
-                        <span className={m.paid ? 'text-green-400' : 'text-orange-400'}>{m.paid ? '✓' : '○'}</span>
+                        <span className={m.paid ? 'text-green-400' : m.invalidAddress ? 'text-red-400' : 'text-orange-400'}>
+  {m.paid ? '✓' : m.invalidAddress ? '✕' : '○'}
+</span>
                         <span className="flex-1 font-mono text-xs text-gray-300 truncate">{shortenAddress(m.walletAddress)}</span>
                         <span className="text-xs" style={{ color: token?.color ?? '#f97316' }}>{formatTokenAmount(m.amountOwed, token?.decimals ?? 18)} {split.tokenSymbol}</span>
                         {m.paid && m.paidAt && <span className="text-xs text-gray-600">{timeAgo(m.paidAt)}</span>}
+                        {m.invalidAddress && <span className="text-xs text-red-500">Declined</span>}
                         {!m.paid && m.reminderCount > 0 && <span className="text-xs text-gray-600">{m.reminderCount} reminder{m.reminderCount > 1 ? 's' : ''} sent</span>}
                       </div>
                     ))}
