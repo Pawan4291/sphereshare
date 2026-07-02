@@ -40,12 +40,13 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
     setPayments(p);
   };
 
-  useEffect(() => {
-    if (!expanded) return;
-    load();
-    const unsub = client?.on('transfer:incoming', load);
-    return () => { unsub?.(); };
-  }, [expanded, split.id, client]);
+ useEffect(() => {
+  if (!expanded) return;
+  load();
+  const interval = setInterval(load, 15000);
+  const unsub = client?.on('transfer:incoming', load);
+  return () => { clearInterval(interval); unsub?.(); };
+}, [expanded, split.id, client]);
 
   const paidCount = members.filter((m) => m.paid).length;
   const shareUrl = `${window.location.origin}/join/${split.id}`;
