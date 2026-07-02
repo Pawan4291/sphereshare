@@ -127,6 +127,16 @@ const channel = supabase
                           {paying === item.member.id ? 'Paying...' : `Pay ${formatTokenAmount(item.member.amountOwed, token?.decimals ?? 18)} ${item.split.tokenSymbol}`}
                           
                         </motion.button>
+                        <motion.button
+  onClick={async () => {
+    await markMemberPaid(item.member.id);
+    const data = await getMemberSplits(identity?.nametag ?? identity?.address ?? '');
+    setRequests(data);
+  }}
+  className="px-4 py-3 rounded-xl font-bold text-green-400 border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 flex-shrink-0 text-sm"
+  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+  ✓ Already Paid
+</motion.button>
                       </motion.div>
                     );
                   })}
