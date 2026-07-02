@@ -162,9 +162,13 @@ const channel = supabase
                     const token = TOKEN_BY_SYMBOL[item.split.tokenSymbol] ?? TOKEN_BY_COIN_ID[item.split.coinId];
                     return (
                       <motion.div key={item.member.id} className="p-4 rounded-xl border border-green-500/20 bg-green-500/5 flex items-center gap-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                        <span className="text-green-400 text-xl">✓</span>
+                        <span className={`text-xl ${item.member.invalidAddress ? 'text-red-400' : 'text-green-400'}`}>
+  {item.member.invalidAddress ? '✕' : '✓'}
+</span>
                         <div className="flex-1"><span className="text-gray-400 font-medium">{item.split.title}</span><span className="text-gray-600 text-sm ml-2">{formatTokenAmount(item.member.amountOwed, token?.decimals ?? 18)} {item.split.tokenSymbol}</span></div>
-                        <span className="text-xs text-gray-600">{item.member.paid ? 'Paid' : item.split.status}</span>
+                        <span className="text-xs text-gray-600">
+  {item.member.invalidAddress ? 'Declined' : item.member.paid ? 'Paid' : item.split.status}
+</span>
                       </motion.div>
                     );
                   })}
