@@ -161,7 +161,7 @@ const channel = supabase
                   {completed.map((item) => {
                     const token = TOKEN_BY_SYMBOL[item.split.tokenSymbol] ?? TOKEN_BY_COIN_ID[item.split.coinId];
                     return (
-                      <motion.div key={item.member.id} className="p-4 rounded-xl border border-green-500/20 bg-green-500/5 flex items-center gap-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <motion.div key={item.member.id} className={`p-4 rounded-xl border flex items-center gap-4 ${item.member.invalidAddress ? 'border-red-500/20 bg-red-500/5' : 'border-green-500/20 bg-green-500/5'}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <span className={`text-xl ${item.member.invalidAddress ? 'text-red-400' : 'text-green-400'}`}>
   {item.member.invalidAddress ? '✕' : '✓'}
 </span>
