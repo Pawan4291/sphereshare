@@ -5,7 +5,7 @@ import { getUserSplits, getSplitMembers, getSplitPayments } from '../lib/storage
 import { formatTokenAmount, TOKEN_BY_SYMBOL, TOKEN_BY_COIN_ID, shortenAddress } from '../lib/tokens';
 import { generateExportCSV, downloadCSV } from '../lib/csv';
 import type { Split, SplitMember, Payment } from '../types';
-
+import { supabase } from '../lib/storage';
 function StatusBadge({ status }: { status: Split['status'] }) {
   const conf = {
     open: { color: 'text-orange-400 bg-orange-500/15 border-orange-500/30', label: 'Open' },
@@ -44,8 +44,17 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
   if (!expanded) return;
   load();
   const interval = setInterval(load, 15000);
+  const channel = supabase
+  .channel('splits-sync')
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'split_members',
+    filter: `split_id=eq.${split.id}`,
+  }, () => load())
+  .subscribe();
   const unsub = client?.on('transfer:incoming', load);
-  return () => { clearInterval(interval); unsub?.(); };
+  return () => { clearInterval(interval); unsub?.(); channel.unsubscribe(); };
 }, [expanded, split.id, client]);
 
   const paidCount = members.filter((m) => m.paid).length;

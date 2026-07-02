@@ -25,7 +25,14 @@ useEffect(() => {
   };
   load();
   const interval = setInterval(load, 15000);
-
+const channel = supabase
+  .channel('requests-sync')
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'split_members',
+  }, () => load())
+  .subscribe();
   // When payment comes in from wallet — mark paid in Supabase
   const unsubIncoming = client?.on('transfer:incoming', async (data: any) => {
     // Find matching pending member and mark paid
@@ -39,9 +46,10 @@ useEffect(() => {
   });
 
   return () => {
-    clearInterval(interval);
-    unsubIncoming?.();
-  };
+  clearInterval(interval);
+  unsubIncoming?.();
+  channel.unsubscribe();
+};
 }, [identity?.address, client]);
 
   const handlePay = async (item: RequestItem) => {
