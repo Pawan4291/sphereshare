@@ -5,7 +5,8 @@
  * - Detects all-paid splits and closes them
  * - Updates leaderboard
  */
-
+import { WebSocket } from 'ws';
+globalThis.WebSocket = WebSocket;
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
