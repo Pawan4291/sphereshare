@@ -48,9 +48,7 @@ client?.on('payment_request:declined', () => load());
         txnHash: (result as any)?.txnHash ?? (result as any)?.hash ?? undefined,
       });
       if (identity?.address) {
-        const resolved = await client?.query('sphere_resolve', { identifier: identity.address });
-const addr = (resolved as any)?.address ?? identity.address;
-const data = await getMemberSplits(addr);
+        const data = await getMemberSplits(identity?.nametag ?? identity?.address ?? '');
         setRequests(data);
       }
     } catch (err: any) {

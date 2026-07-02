@@ -7,6 +7,7 @@ import WalletConnect from '../components/WalletConnect';
 import PublicFeed from '../components/PublicFeed';
 import type { AppMode } from '../types';
 
+
 const MODE_INFO = {
   split: {
     title: 'Split a Bill',
@@ -127,7 +128,7 @@ export default function HomePage() {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <CreateSplitForm mode={mode} />
+                   <CreateSplitForm mode={mode as AppMode} />
                   </motion.div>
                 </AnimatePresence>
               )}
