@@ -137,6 +137,16 @@ const channel = supabase
   whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
   ✓ Already Paid
 </motion.button>
+<motion.button
+  onClick={async () => {
+    await markMemberPaid(item.member.id, 'declined');
+    const data = await getMemberSplits(identity?.nametag ?? identity?.address ?? '');
+    setRequests(data);
+  }}
+  className="px-4 py-3 rounded-xl font-bold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 flex-shrink-0 text-sm"
+  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+  ✕ Decline
+</motion.button>
                       </motion.div>
                     );
                   })}

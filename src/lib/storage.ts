@@ -138,8 +138,9 @@ export async function getMemberSplits(walletAddress: string): Promise<{ split: S
 
 export async function markMemberPaid(memberId: string, paidAt?: string): Promise<void> {
   const { error } = await supabase.from('split_members').update({
-    paid: true,
-    paid_at: paidAt ?? new Date().toISOString(),
+    paid: paidAt !== 'declined',
+    paid_at: paidAt !== 'declined' ? (paidAt ?? new Date().toISOString()) : null,
+    invalid_address: paidAt === 'declined',
   }).eq('id', memberId);
   if (error) throw error;
 }
