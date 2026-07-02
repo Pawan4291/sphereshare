@@ -282,3 +282,4 @@ export async function getPublicFeed(): Promise<PublicFeedItem[]> {
   if (error) throw error;
   return data ?? [];
 }
+export { supabase };

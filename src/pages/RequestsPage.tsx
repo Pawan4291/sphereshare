@@ -4,6 +4,7 @@ import { useWallet } from '../context/WalletContext';
 import { getMemberSplits, markMemberPaid, recordPayment } from '../lib/storage';
 import { formatTokenAmount, TOKEN_BY_SYMBOL, TOKEN_BY_COIN_ID, shortenAddress } from '../lib/tokens';
 import { getErrorMessage, ERROR_CODES } from '../lib/sphere';
+import { supabase } from '../lib/storage';
 
 interface RequestItem {
   split: import('../types').Split;
@@ -23,10 +24,14 @@ useEffect(() => {
     setRequests(data);
   };
   load();
-  // Poll every 15s to catch payments made from Sphere wallet directly
+  client?.on('transfer:incoming', () => load());
   const interval = setInterval(load, 15000);
-  return () => clearInterval(interval);
-}, [identity?.address]);
+  const channel = supabase
+    .channel('member-updates')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'split_members' }, () => load())
+    .subscribe();
+  return () => { clearInterval(interval); channel.unsubscribe(); };
+}, [identity?.address, client]);
 
   const handlePay = async (item: RequestItem) => {
     if (!client) return;

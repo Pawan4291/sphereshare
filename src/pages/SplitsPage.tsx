@@ -27,6 +27,7 @@ function timeAgo(dateStr: string): string {
 }
 
 function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) => void }) {
+  const [localStatus, setLocalStatus] = useState(split.status);
   const [expanded, setExpanded] = useState(false);
   const [members, setMembers] = useState<SplitMember[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -70,7 +71,7 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-bold text-white truncate">{split.title}</h3>
-            <StatusBadge status={split.status} />
+            <StatusBadge status={localStatus} />
             <span className="text-xs px-2 py-0.5 rounded-md bg-white/5 text-gray-500 capitalize">{split.mode}</span>
           </div>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
@@ -117,10 +118,11 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
                     className="px-4 py-2 rounded-xl bg-orange-500/15 text-orange-400 text-xs font-semibold border border-orange-500/20 hover:bg-orange-500/25"
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📋 Copy Join Link</motion.button>
                 )}
-               {split.status === 'open' && (
+               {localStatus === 'open' && (
   <motion.button onClick={async () => {
   const { updateSplitStatus } = await import('../lib/storage');
   await updateSplitStatus(split.id, 'expired');
+  setLocalStatus('expired'); 
   const [m, p] = await Promise.all([getSplitMembers(split.id), getSplitPayments(split.id)]);
   setMembers(m);
   setPayments(p);
@@ -129,7 +131,7 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>🚫 Cancel Split</motion.button>
 )}
 
-{split.status === 'expired' && (
+{localStatus === 'expired' && (
   <motion.button onClick={async () => {
     const { deleteSplit } = await import('../lib/storage');
    await deleteSplit(split.id);
