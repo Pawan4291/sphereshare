@@ -213,8 +213,13 @@ if (mode === 'split' && client) {
         }
       }
 
-     if (!cancelled) setCreatedId(split.id);
-     else { await deleteSplit(split.id); setError('Split cancelled — no requests were sent.'); }
+     if (!cancelled) {
+  setCreatedId(split.id);
+} else {
+  await deleteSplit(split.id);
+  setCreatedId(null);
+  setError('Split cancelled — no requests were sent.');
+}
     } catch (err: any) {
       const code = (err as { code?: number })?.code;
       setError(code ? getErrorMessage(code) : err?.message ?? 'Failed to create. Please try again.');

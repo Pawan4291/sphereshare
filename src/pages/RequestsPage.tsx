@@ -16,18 +16,17 @@ export default function RequestsPage() {
   const [paying, setPaying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
- useEffect(() => {
-    if (!identity?.address) return;
-    const load = async () => {
-      const data = await getMemberSplits(identity.nametag ?? identity.address);
-      setRequests(data);
-    };
-    load();
-    client?.on('transfer:incoming', () => load());
-    client?.on('transfer:outgoing', () => load());
-    client?.on('payment_request:paid', () => load());
-    client?.on('payment_request:declined', () => load());
-  }, [identity?.address, client]);
+useEffect(() => {
+  if (!identity?.address) return;
+  const load = async () => {
+    const data = await getMemberSplits(identity.nametag ?? identity.address);
+    setRequests(data);
+  };
+  load();
+  // Poll every 15s to catch payments made from Sphere wallet directly
+  const interval = setInterval(load, 15000);
+  return () => clearInterval(interval);
+}, [identity?.address]);
 
   const handlePay = async (item: RequestItem) => {
     if (!client) return;
@@ -102,6 +101,17 @@ export default function RequestsPage() {
                           className="px-6 py-3 rounded-xl font-black text-black bg-gradient-to-r from-orange-400 to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-500/25 flex-shrink-0"
                           whileHover={{ scale: paying === item.member.id ? 1 : 1.05 }} whileTap={{ scale: paying === item.member.id ? 1 : 0.95 }}>
                           {paying === item.member.id ? 'Paying...' : `Pay ${formatTokenAmount(item.member.amountOwed, token?.decimals ?? 18)} ${item.split.tokenSymbol}`}
+                          {paying !== item.member.id && (
+  <motion.button onClick={async () => {
+    await markMemberPaid(item.member.id);
+    const data = await getMemberSplits(identity?.nametag ?? identity?.address ?? '');
+    setRequests(data);
+  }}
+    className="px-4 py-2 rounded-xl text-xs font-semibold border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 flex-shrink-0"
+    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+    ✓ Mark Paid
+  </motion.button>
+)}
                         </motion.button>
                       </motion.div>
                     );
