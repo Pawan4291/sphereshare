@@ -16,17 +16,18 @@ export default function RequestsPage() {
   const [paying, setPaying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!identity?.address) return;
     const load = async () => {
-     const data = await getMemberSplits(identity.nametag ?? identity.address);
+      const data = await getMemberSplits(identity.nametag ?? identity.address);
       setRequests(data);
     };
     load();
     client?.on('transfer:incoming', () => load());
-client?.on('payment_request:paid', () => load());
-client?.on('payment_request:declined', () => load());
-  }, [identity?.address]);
+    client?.on('transfer:outgoing', () => load());
+    client?.on('payment_request:paid', () => load());
+    client?.on('payment_request:declined', () => load());
+  }, [identity?.address, client]);
 
   const handlePay = async (item: RequestItem) => {
     if (!client) return;
