@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex-shrink-0 ${selectedCoinId === t.coinId ? 'text-black shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
               style={selectedCoinId === t.coinId ? { background: `linear-gradient(135deg, ${t.color}, ${t.color}cc)` } : {}}
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-              <span>{t.icon}</span><span>{t.symbol}</span>
+             <img src={t.logoUrl} alt={t.symbol} className="w-4 h-4 rounded-full" onError={(e) => (e.currentTarget.style.display='none')} /><span>{t.symbol}</span>
             </motion.button>
           ))}
         </motion.div>
