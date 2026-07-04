@@ -189,23 +189,25 @@ const human = `${intPart}.${fracPart.toString().padStart(tkn.decimals, '0').slic
       });
       await addMembers(memberData);
 
-      if (mode === 'payout' && client && !requireApproval) {
-        for (const member of memberData) {
-          try {
-            await client.intent('send', {
-              to: member.walletAddress,
-              amount: member.amountOwed.toString(),
-              coinId: token.coinId,
-            });
-          } catch (payErr: any) {
-            const code = (payErr as { code?: number })?.code;
-            if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) {
-              break;
-            }
-            console.error(`Payment to ${member.walletAddress} failed:`, payErr);
-          }
-        }
-      }
+    if (mode === 'payout' && client && !requireApproval) {
+  const { markMemberPaid } = await import('../lib/storage');
+  for (const member of memberData) {
+    try {
+      await client.intent('send', {
+        to: member.walletAddress,
+        amount: member.amountOwed.toString(),
+        coinId: token.coinId,
+      });
+      const { getSplitMembers } = await import('../lib/storage');
+const members = await getSplitMembers(split.id);
+const m = members.find(x => x.walletAddress === member.walletAddress);
+if (m) await markMemberPaid(m.id);
+    } catch (payErr: any) {
+      const code = (payErr as { code?: number })?.code;
+      if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) break;
+    }
+  }
+}
 
    let cancelled = false;
 if (mode === 'split' && client) {
