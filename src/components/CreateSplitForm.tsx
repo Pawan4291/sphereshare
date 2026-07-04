@@ -191,9 +191,9 @@ const human = `${intPart}.${fracPart.toString().padStart(tkn.decimals, '0').slic
       });
       await addMembers(memberData);
 
-   const payoutResults: { wallet: string; paid: boolean }[] = [];
+   let payoutCancelled = false;
 if (mode === 'payout' && client && !requireApproval) {
-  const { markMemberPaid } = await import('../lib/storage');
+  const { markMemberPaid, getSplitMembers } = await import('../lib/storage');
   for (const member of memberData) {
     try {
       await client.intent('send', {
@@ -201,23 +201,27 @@ if (mode === 'payout' && client && !requireApproval) {
         amount: member.amountOwed.toString(),
         coinId: token.coinId,
       });
-      const { getSplitMembers } = await import('../lib/storage');
-const members = await getSplitMembers(split.id);
-const m = members.find(x => x.walletAddress === member.walletAddress);
-if (m) await markMemberPaid(m.id);
-payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: true }];
+      const members = await getSplitMembers(split.id);
+      const m = members.find(x => x.walletAddress === member.walletAddress);
+      if (m) await markMemberPaid(m.id);
+      payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: true }];
     } catch (payErr: any) {
       const code = (payErr as { code?: number })?.code;
+      payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: false }];
       if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) {
-  payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: false }];
-  break;
-}
-payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: false }];
+        payoutCancelled = payoutResultsRef.current.every(r => !r.paid);
+        break;
+      }
     }
   }
 }
+if (payoutCancelled) {
+  await deleteSplit(split.id);
+  setError('Payout cancelled — no payments were sent.');
+  return;
+}
 
-   let cancelled = false;
+let cancelled = false;
 if (mode === 'split' && client) {
   for (const member of memberData) {
     try {
