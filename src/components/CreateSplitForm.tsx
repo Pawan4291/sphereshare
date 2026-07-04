@@ -329,15 +329,23 @@ if (mode === 'split' && client) {
           <label className="block text-sm font-semibold text-gray-300 mb-2">
             Total Amount ({token.symbol})
           </label>
-          <input
-            type="number"
-            min="0"
-            step="any"
-            value={totalAmount}
-            onChange={(e) => setTotalAmount(e.target.value)}
-            placeholder="0.00"
-            className="w-full px-4 py-3 rounded-xl border border-orange-500/20 bg-white/5 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/60 transition-colors"
-          />
+         <div className="flex gap-2">
+  <input
+    type="number"
+    min="0"
+    step="any"
+    value={totalAmount}
+    onChange={(e) => setTotalAmount(e.target.value)}
+    placeholder="0.00"
+    className="flex-1 px-4 py-3 rounded-xl border border-orange-500/20 bg-white/5 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500/60 transition-colors"
+  />
+  <button type="button" onClick={() => {
+    const bal = balances[token.coinId];
+    if (bal) setTotalAmount(bal);
+  }} className="px-4 py-3 rounded-xl bg-orange-500/20 text-orange-400 text-xs font-bold border border-orange-500/30 hover:bg-orange-500/30">
+    MAX
+  </button>
+</div>
           {recipients.length > 0 && totalAmount && (
             <div className="mt-2 text-xs text-orange-400">≈ {perPersonAmount()} {token.symbol} per person</div>
           )}

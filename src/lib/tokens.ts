@@ -16,7 +16,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
     coinId: 'f581d30f593e4b369d684a4563b5246f07b1d265f7178a2c0a82b81f39c24dc0',
     decimals: 18,
     icon: 'https://assets.coingecko.com/coins/images/placeholder.png',
-    logoUrl: 'https://sphere.unicity.network/assets/uct-logo.png',
+    logoUrl: 'https://sphere.unicity.network/favicon.ico',
     color: '#FF6B00',
     bgColor: 'rgba(255,107,0,0.15)',
   },
