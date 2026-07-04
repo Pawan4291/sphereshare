@@ -23,13 +23,13 @@ export default function LeaderboardPage() {
   const [selectedCoinId, setSelectedCoinId] = useState(SUPPORTED_TOKENS[0].coinId);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
-  useEffect(() => {
-    const load = async () => {
-      const data = await getLeaderboard(selectedCoinId);
-      setEntries(data);
-    };
-    load();
-  }, [selectedCoinId]);
+ useEffect(() => {
+  const load = async () => {
+    const data = await getLeaderboard(selectedCoinId);
+    setEntries(data);
+  };
+  load();
+}, [selectedCoinId, entries.length]);
 
   const token = SUPPORTED_TOKENS.find((t) => t.coinId === selectedCoinId) ?? SUPPORTED_TOKENS[0];
 
@@ -40,7 +40,10 @@ export default function LeaderboardPage() {
           <h1 className="text-4xl font-black text-white mb-2">
             🏆 <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Leaderboard</span>
           </h1>
-          <p className="text-gray-400">Top payers per token — never summed across tokens.</p>
+          <div className="flex items-center justify-center gap-3">
+  <p className="text-gray-400">Top payers per token — never summed across tokens.</p>
+  <motion.button onClick={() => setEntries([])} className="px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-xs font-semibold border border-orange-500/30 hover:bg-orange-500/30" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>↻ Refresh</motion.button>
+</div>
         </motion.div>
 
         <motion.div className="flex gap-2 p-1.5 rounded-2xl bg-white/5 border border-orange-500/10 mb-8 overflow-x-auto"
