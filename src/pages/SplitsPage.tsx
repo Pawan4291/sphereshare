@@ -87,6 +87,12 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <span className="text-sm font-bold" style={{ color: token?.color ?? '#f97316' }}>{formatTokenAmount(split.totalAmount, token?.decimals ?? 18)} {split.tokenSymbol}</span>
             <span className="text-xs text-gray-500">{timeAgo(split.createdAt)}</span>
+            {split.deadline && new Date(split.deadline) > new Date() && (
+  <span className="text-xs text-yellow-600">⏰ Due {new Date(split.deadline).toLocaleDateString()}</span>
+)}
+{split.deadline && new Date(split.deadline) <= new Date() && localStatus === 'open' && (
+  <span className="text-xs text-red-500">⚠️ Overdue</span>
+)}
             {members.length > 0 && <span className="text-xs text-gray-500">{paidCount}/{members.length} paid</span>}
           </div>
         </div>
@@ -142,6 +148,7 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
 }}
     className="px-4 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-semibold border border-red-500/20 hover:bg-red-500/25"
     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>🚫 Cancel Split</motion.button>
+    
 )}
 
 {localStatus === 'expired' && (
@@ -153,10 +160,29 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
     className="px-4 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-semibold border border-red-500/20 hover:bg-red-500/25"
     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>🗑️ Delete</motion.button>
 )}
+{localStatus === 'open' && split.requireApproval && split.mode === 'payout' && (
+  <motion.button onClick={async () => {
+    if (!client) return;
+    for (const member of members.filter(m => !m.paid)) {
+      try {
+        await client.intent('send', {
+          to: member.walletAddress,
+          amount: member.amountOwed.toString(),
+          coinId: split.coinId,
+        });
+        const { markMemberPaid } = await import('../lib/storage');
+        await markMemberPaid(member.id);
+      } catch {}
+    }
+    await load();
+  }}
+    className="px-4 py-2 rounded-xl bg-green-500/15 text-green-400 text-xs font-semibold border border-green-500/20 hover:bg-green-500/25"
+    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>✅ Confirm & Send</motion.button>
+)}
 <motion.button onClick={handleExport}
-                  className="px-4 py-2 rounded-xl bg-white/5 text-gray-400 text-xs font-semibold border border-white/10 hover:bg-white/10"
-                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📄 Export CSV</motion.button>
-              </div>
+  className="px-4 py-2 rounded-xl bg-white/5 text-gray-400 text-xs font-semibold border border-white/10 hover:bg-white/10"
+  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📄 Export CSV</motion.button>
+</div>
             </div>
           </motion.div>
         )}
