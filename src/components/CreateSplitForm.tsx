@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
 import TokenSelector from './TokenSelector';
 import { SUPPORTED_TOKENS, parseTokenAmount, type TokenInfo } from '../lib/tokens';
-import { createSplit, addMembers, updateSplitStatus, deleteSplit } from '../lib/storage';
+import { createSplit, addMembers, deleteSplit } from '../lib/storage';
 import { parseCSV } from '../lib/csv';
 import type { RecipientRow, AppMode } from '../types';
 import { getErrorMessage, ERROR_CODES } from '../lib/sphere';
@@ -40,17 +40,24 @@ export default function CreateSplitForm({ mode }: Props) {
   if (!client) return;
   try {
     const bal = await client.query('sphere_getBalance');
+    console.log('RAW BALANCE:', JSON.stringify(bal));
     if (Array.isArray(bal)) {
       const map: Record<string, string> = {};
-      for (const item of bal) {
-        if (item.coinId && item.balance !== undefined) map[item.coinId] = item.balance;
+      for (const item of bal as any[]) {
+        if (item.coinId && item.balance !== undefined) {
+          const tkn = SUPPORTED_TOKENS.find(t => t.coinId === item.coinId);
+          if (tkn) {
+            const human = (Number(BigInt(item.balance)) / 10 ** tkn.decimals).toFixed(6);
+            map[item.coinId] = human;
+          }
+        }
       }
       setBalances(map);
     }
-  } catch { }
+  } catch(e) { console.error('Balance error:', e); }
 }, [client]);
 
-  useState(() => { fetchBalances(); });
+  useEffect(() => { fetchBalances(); }, [fetchBalances]);
 
   const validateAddress = useCallback(async (addr: string): Promise<boolean> => {
     if (!client) return true;
