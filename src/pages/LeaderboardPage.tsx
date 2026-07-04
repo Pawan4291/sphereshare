@@ -92,7 +92,7 @@ export default function LeaderboardPage() {
                     <div className="font-black text-lg">{i < 3 ? RANK_ICONS[i] : <span className="text-gray-600 text-base">#{i + 1}</span>}</div>
                     <div className="col-span-2">
                       <div className="font-mono text-sm text-gray-300">{entry.walletAddress.startsWith('@') ? entry.walletAddress : shortenAddress(entry.walletAddress)}</div>
-                      <div className="text-xs text-gray-600 mt-0.5">{entry.splitsCreated} split{entry.splitsCreated !== 1 ? 's' : ''} created</div>
+                     <div className="text-xs text-gray-600 mt-0.5">{entry.timesSettled} payment{entry.timesSettled !== 1 ? 's' : ''} made</div>
                     </div>
                     <div><span className="font-bold text-sm" style={{ color: token.color }}>{formatTokenAmount(entry.totalPaid, token.decimals, 4)}</span><span className="text-xs text-gray-600 ml-1">{token.symbol}</span></div>
                     <div className="text-sm text-gray-400">{entry.fastestPaySeconds !== undefined ? entry.fastestPaySeconds < 60 ? `${entry.fastestPaySeconds}s` : `${Math.floor(entry.fastestPaySeconds / 60)}m` : '—'}</div>

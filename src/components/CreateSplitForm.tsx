@@ -205,7 +205,7 @@ if (mode === 'payout' && client && !requireApproval) {
       const m = members.find(x => x.walletAddress === member.walletAddress);
       if (m) await markMemberPaid(m.id);
       const { upsertLeaderboard } = await import('../lib/storage');
-await upsertLeaderboard(identity.address, token.coinId, {
+await upsertLeaderboard(identity.nametag ?? identity.address, token.coinId, {
   splitsCreated: 1,
   totalPaid: member.amountOwed,
   timesSettled: 1,
