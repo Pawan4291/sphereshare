@@ -239,7 +239,7 @@ export async function upsertLeaderboard(
   } else {
     const updates: any = { updated_at: new Date().toISOString() };
     if (delta.splitsCreated) updates.splits_created = existing.splits_created + delta.splitsCreated;
-    if (delta.totalPaid) updates.total_paid = Number(BigInt(existing.total_paid) + delta.totalPaid);
+   if (delta.totalPaid) updates.total_paid = Number(existing.total_paid) + Number(delta.totalPaid);
     if (delta.fastestPaySeconds !== undefined) {
       if (!existing.fastest_pay_seconds || delta.fastestPaySeconds < existing.fastest_pay_seconds) {
         updates.fastest_pay_seconds = delta.fastestPaySeconds;
