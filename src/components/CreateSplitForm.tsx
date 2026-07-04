@@ -210,6 +210,8 @@ if (mode === 'payout' && client && !requireApproval) {
       payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: false }];
       if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) {
         payoutCancelled = payoutResultsRef.current.every(r => !r.paid);
+        const { supabase } = await import('../lib/storage');
+await supabase.from('split_members').update({ invalid_address: true }).eq('split_id', split.id).eq('wallet_address', member.walletAddress);
         break;
       }
     }
