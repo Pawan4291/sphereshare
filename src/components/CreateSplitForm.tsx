@@ -480,7 +480,7 @@ if (mode === 'split' && client) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+     <div>
         <div>
           <label className="block text-sm font-semibold text-gray-300 mb-2">Deadline (optional)</label>
           <input
@@ -490,22 +490,7 @@ if (mode === 'split' && client) {
             className="w-full px-4 py-3 rounded-xl border border-orange-500/20 bg-white/5 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
           />
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-300 mb-2">Require Manual Approval</label>
-          <motion.button
-            type="button"
-            onClick={() => setRequireApproval(!requireApproval)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl border w-full transition-all ${
-              requireApproval ? 'border-orange-500/60 bg-orange-500/15 text-orange-300' : 'border-orange-500/20 bg-white/5 text-gray-400'
-            }`}
-            whileHover={{ scale: 1.01 }}
-          >
-            <motion.div className={`w-10 h-5 rounded-full flex items-center transition-colors ${requireApproval ? 'bg-orange-500 justify-end' : 'bg-gray-700 justify-start'} px-0.5`}>
-              <motion.div className="w-4 h-4 rounded-full bg-white" layout />
-            </motion.div>
-            <span className="text-sm">{requireApproval ? '🛑 Manual checkpoint' : '🤖 Fully autonomous'}</span>
-          </motion.button>
-        </div>
+        
       </div>
 
       <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/10 text-xs text-gray-500">

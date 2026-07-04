@@ -160,25 +160,7 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
     className="px-4 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-semibold border border-red-500/20 hover:bg-red-500/25"
     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>🗑️ Delete</motion.button>
 )}
-{localStatus === 'open' && split.requireApproval && split.mode === 'payout' && (
-  <motion.button onClick={async () => {
-    if (!client) return;
-    for (const member of members.filter(m => !m.paid)) {
-      try {
-        await client.intent('send', {
-          to: member.walletAddress,
-          amount: member.amountOwed.toString(),
-          coinId: split.coinId,
-        });
-        const { markMemberPaid } = await import('../lib/storage');
-        await markMemberPaid(member.id);
-      } catch {}
-    }
-    await load();
-  }}
-    className="px-4 py-2 rounded-xl bg-green-500/15 text-green-400 text-xs font-semibold border border-green-500/20 hover:bg-green-500/25"
-    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>✅ Confirm & Send</motion.button>
-)}
+
 <motion.button onClick={handleExport}
   className="px-4 py-2 rounded-xl bg-white/5 text-gray-400 text-xs font-semibold border border-white/10 hover:bg-white/10"
   whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📄 Export CSV</motion.button>
