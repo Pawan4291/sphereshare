@@ -35,6 +35,7 @@ export default function CreateSplitForm({ mode }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [balances, setBalances] = useState<Record<string, string>>({});
+  const [payoutResults, setPayoutResults] = useState<{ wallet: string; paid: boolean }[]>([]);
 
  const fetchBalances = useCallback(async () => {
   if (!client) return;
@@ -189,7 +190,8 @@ const human = `${intPart}.${fracPart.toString().padStart(tkn.decimals, '0').slic
       });
       await addMembers(memberData);
 
-    if (mode === 'payout' && client && !requireApproval) {
+   const payoutResults: { wallet: string; paid: boolean }[] = [];
+if (mode === 'payout' && client && !requireApproval) {
   const { markMemberPaid } = await import('../lib/storage');
   for (const member of memberData) {
     try {
@@ -202,9 +204,11 @@ const human = `${intPart}.${fracPart.toString().padStart(tkn.decimals, '0').slic
 const members = await getSplitMembers(split.id);
 const m = members.find(x => x.walletAddress === member.walletAddress);
 if (m) await markMemberPaid(m.id);
+setPayoutResults(prev => [...prev, { wallet: member.walletAddress, paid: true }]);
     } catch (payErr: any) {
       const code = (payErr as { code?: number })?.code;
       if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) break;
+      setPayoutResults(prev => [...prev, { wallet: member.walletAddress, paid: false }]);
     }
   }
 }
@@ -249,6 +253,17 @@ if (mode === 'split' && client) {
         animate={{ scale: 1, opacity: 1 }}
       >
         <div className="text-5xl mb-4">🎉</div>
+
+        {payoutResults.length > 0 && (
+  <div className="mb-4 text-left space-y-1">
+    {payoutResults.map((r, i) => (
+      <div key={i} className={`text-xs px-3 py-2 rounded-lg ${r.paid ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
+        {r.paid ? '✓' : '✗'} {r.wallet} — {r.paid ? `${token.symbol} sent` : 'not paid'}
+      </div>
+    ))}
+  </div>
+)}
+        
         <h3 className="text-2xl font-black text-white mb-2">
           {mode === 'split' ? 'Split Created!' : 'Payout Sent!'}
         </h3>

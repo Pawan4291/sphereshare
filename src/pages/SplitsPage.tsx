@@ -137,7 +137,7 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
                     className="px-4 py-2 rounded-xl bg-orange-500/15 text-orange-400 text-xs font-semibold border border-orange-500/20 hover:bg-orange-500/25"
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📋 Copy Join Link</motion.button>
                 )}
-               {localStatus === 'open' && (
+               {localStatus === 'open' && split.mode === 'split' && (
   <motion.button onClick={async () => {
   const { updateSplitStatus } = await import('../lib/storage');
   await updateSplitStatus(split.id, 'expired');
