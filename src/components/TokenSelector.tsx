@@ -5,7 +5,7 @@ import { SUPPORTED_TOKENS, type TokenInfo } from '../lib/tokens';
 interface Props {
   selected: TokenInfo;
   onChange: (token: TokenInfo) => void;
-  balances?: Record<string, string>; // coinId -> human-readable balance
+  balances?: Record<string, string>;
 }
 
 export default function TokenSelector({ selected, onChange, balances }: Props) {
@@ -20,12 +20,7 @@ export default function TokenSelector({ selected, onChange, balances }: Props) {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
       >
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-          style={{ background: selected.bgColor, color: selected.color }}
-        >
-          {selected.icon}
-        </div>
+        <img src={selected.logoUrl} alt={selected.symbol} className="w-8 h-8 rounded-full flex-shrink-0" />
         <div className="flex-1 text-left">
           <div className="text-white font-bold text-sm">{selected.symbol}</div>
           <div className="text-gray-500 text-xs">{selected.name}</div>
@@ -35,13 +30,7 @@ export default function TokenSelector({ selected, onChange, balances }: Props) {
             {balances[selected.coinId]} {selected.symbol}
           </div>
         )}
-        <motion.span
-          className="text-gray-400 text-xs"
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          ▼
-        </motion.span>
+        <motion.span className="text-gray-400 text-xs" animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>▼</motion.span>
       </motion.button>
 
       <AnimatePresence>
@@ -58,44 +47,26 @@ export default function TokenSelector({ selected, onChange, balances }: Props) {
               <motion.button
                 key={token.coinId}
                 type="button"
-                onClick={() => {
-                  onChange(token);
-                  setOpen(false);
-                }}
-                className={`flex items-center gap-3 px-4 py-3 w-full text-left transition-colors ${
-                  token.coinId === selected.coinId
-                    ? 'bg-orange-500/15'
-                    : 'hover:bg-white/5'
-                }`}
+                onClick={() => { onChange(token); setOpen(false); }}
+                className={`flex items-center gap-3 px-4 py-3 w-full text-left transition-colors ${token.coinId === selected.coinId ? 'bg-orange-500/15' : 'hover:bg-white/5'}`}
                 whileHover={{ x: 4 }}
               >
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                  style={{ background: token.bgColor, color: token.color }}
-                >
-                  {token.icon}
-                </div>
+                <img src={token.logoUrl} alt={token.symbol} className="w-8 h-8 rounded-full flex-shrink-0" />
                 <div className="flex-1">
                   <div className="text-white font-bold text-sm">{token.symbol}</div>
                   <div className="text-gray-500 text-xs">{token.name}</div>
                 </div>
                 {balances?.[token.coinId] && (
-                  <div className="text-xs text-gray-400">
-                    {balances[token.coinId]} {token.symbol}
-                  </div>
+                  <div className="text-xs text-gray-400">{balances[token.coinId]} {token.symbol}</div>
                 )}
-                {token.coinId === selected.coinId && (
-                  <span className="text-orange-400 text-xs">✓</span>
-                )}
+                {token.coinId === selected.coinId && <span className="text-orange-400 text-xs">✓</span>}
               </motion.button>
             ))}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {open && (
-        <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-      )}
+      {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
     </div>
   );
 }

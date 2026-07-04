@@ -3,7 +3,8 @@ export interface TokenInfo {
   name: string;
   coinId: string;
   decimals: number;
-  icon: string;
+  icon?: string;
+  logoUrl: string;
   color: string;
   bgColor: string;
 }
@@ -14,7 +15,8 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
     name: 'Unicity',
     coinId: 'f581d30f593e4b369d684a4563b5246f07b1d265f7178a2c0a82b81f39c24dc0',
     decimals: 18,
-    icon: '⬡',
+    icon: 'https://assets.coingecko.com/coins/images/placeholder.png',
+    logoUrl: 'https://sphere.unicity.network/assets/uct-logo.png',
     color: '#FF6B00',
     bgColor: 'rgba(255,107,0,0.15)',
   },
@@ -23,7 +25,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
     name: 'Solana',
     coinId: '72f7771d5690afcf89cfc16e8ee8c1a836d0faa8ed1b34d527aabc18acb949ae',
     decimals: 9,
-    icon: '◎',
+    logoUrl: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
     color: '#9945FF',
     bgColor: 'rgba(153,69,255,0.15)',
   },
@@ -32,7 +34,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
     name: 'Bitcoin',
     coinId: '3cc412d8a24510d424f74de4c471d22298b7f52625af6fd3ecb3c3d9e1a683fb',
     decimals: 8,
-    icon: '₿',
+    logoUrl: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
     color: '#F7931A',
     bgColor: 'rgba(247,147,26,0.15)',
   },
@@ -41,7 +43,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
     name: 'Ethereum',
     coinId: '746a4e75aeb3221462f762fc41925735983c6039e89288bbb632a8fb1012e7d0',
     decimals: 18,
-    icon: 'Ξ',
+    logoUrl: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
     color: '#627EEA',
     bgColor: 'rgba(98,126,234,0.15)',
   },
@@ -50,7 +52,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
     name: 'Unicity USD',
     coinId: 'e210f98956f564bfe67ee94fddd386b5157f660d1957169b391f962093a2da2a',
     decimals: 6,
-    icon: '$',
+    logoUrl: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
     color: '#26A17B',
     bgColor: 'rgba(38,161,123,0.15)',
   },
