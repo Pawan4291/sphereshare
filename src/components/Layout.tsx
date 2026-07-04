@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import { AnimatedBackground } from './AnimatedBackground';
-import AgentStatusPanel from './AgentStatus';
 
 export default function Layout() {
   return (
@@ -11,7 +10,6 @@ export default function Layout() {
       <main className="relative z-10 pt-20">
         <Outlet />
       </main>
-      <AgentStatusPanel />
     </div>
   );
 }
