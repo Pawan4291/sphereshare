@@ -40,14 +40,17 @@ export default function CreateSplitForm({ mode }: Props) {
   if (!client) return;
   try {
     const bal = await client.query('sphere_getBalance');
-    console.log('RAW BALANCE:', JSON.stringify(bal));
     if (Array.isArray(bal)) {
       const map: Record<string, string> = {};
       for (const item of bal as any[]) {
-        if (item.coinId && item.balance !== undefined) {
+        if (item.coinId && item.totalAmount !== undefined) {
           const tkn = SUPPORTED_TOKENS.find(t => t.coinId === item.coinId);
           if (tkn) {
-            const human = (Number(BigInt(item.balance)) / 10 ** tkn.decimals).toFixed(6);
+           const divisor = BigInt(10 ** tkn.decimals);
+const total = BigInt(item.totalAmount);
+const intPart = total / divisor;
+const fracPart = total % divisor;
+const human = `${intPart}.${fracPart.toString().padStart(tkn.decimals, '0').slice(0, 6)}`;
             map[item.coinId] = human;
           }
         }

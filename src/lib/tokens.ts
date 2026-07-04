@@ -16,7 +16,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
     coinId: 'f581d30f593e4b369d684a4563b5246f07b1d265f7178a2c0a82b81f39c24dc0',
     decimals: 18,
     icon: 'https://assets.coingecko.com/coins/images/placeholder.png',
-    logoUrl: 'https://unicity.ai/favicon.ico',
+    logoUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="%23FF6B00"/><text x="16" y="21" text-anchor="middle" font-size="16" font-weight="bold" font-family="Arial" fill="white">U</text></svg>',
     color: '#FF6B00',
     bgColor: 'rgba(255,107,0,0.15)',
   },
