@@ -167,7 +167,7 @@ export default function LandingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
         >
-          Split bills with friends or send bulk payouts to hundreds — with any token, zero manual
+          Split bills with friends or send bulk payouts to hundreds with any token, zero manual
           work. The autonomous agent handles reminders, detection, and settlement{' '}
           <span className="text-orange-400 font-semibold">autonomously</span>.
         </motion.p>
