@@ -207,8 +207,11 @@ if (m) await markMemberPaid(m.id);
 setPayoutResults(prev => [...prev, { wallet: member.walletAddress, paid: true }]);
     } catch (payErr: any) {
       const code = (payErr as { code?: number })?.code;
-      if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) break;
-      setPayoutResults(prev => [...prev, { wallet: member.walletAddress, paid: false }]);
+      if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) {
+  setPayoutResults(prev => [...prev, { wallet: member.walletAddress, paid: false }]);
+  break;
+}
+setPayoutResults(prev => [...prev, { wallet: member.walletAddress, paid: false }]);
     }
   }
 }
