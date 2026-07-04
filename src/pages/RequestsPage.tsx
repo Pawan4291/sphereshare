@@ -40,6 +40,12 @@ const channel = supabase
     for (const item of pending) {
       if (data?.coinId === item.split.coinId) {
         await markMemberPaid(item.member.id);
+        await import('../lib/storage').then(({ upsertLeaderboard }) => 
+  upsertLeaderboard(identity?.address ?? '', item.split.coinId, {
+    totalPaid: item.member.amountOwed,
+    timesSettled: 1,
+  })
+);
       }
     }
     load();

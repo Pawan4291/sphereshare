@@ -204,6 +204,12 @@ if (mode === 'payout' && client && !requireApproval) {
       const members = await getSplitMembers(split.id);
       const m = members.find(x => x.walletAddress === member.walletAddress);
       if (m) await markMemberPaid(m.id);
+      const { upsertLeaderboard } = await import('../lib/storage');
+await upsertLeaderboard(identity.address, token.coinId, {
+  splitsCreated: 1,
+  totalPaid: member.amountOwed,
+  timesSettled: 1,
+});
       payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: true }];
     } catch (payErr: any) {
       const code = (payErr as { code?: number })?.code;
