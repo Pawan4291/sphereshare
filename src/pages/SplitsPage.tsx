@@ -41,8 +41,8 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
   };
 
  useEffect(() => {
-  if (!expanded) return;
   load();
+  if (!expanded) return;
   const interval = setInterval(load, 15000);
   const channel = supabase
   .channel('splits-sync')
