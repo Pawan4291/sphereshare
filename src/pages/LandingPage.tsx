@@ -16,8 +16,8 @@ const FEATURES = [
   },
   {
     icon: '🤖',
-    title: 'Autonomous Agent',
-    desc: 'Astrid agent sends reminders, detects payments, and settles automatically.',
+    title: 'GitHub Agent',
+    desc: 'Automated agent runs every 5 minutes — sends reminders, detects payments, and settles splits.',
     gradient: 'from-orange-400/20 to-transparent',
   },
   {
@@ -49,7 +49,7 @@ const FEATURES = [
 const STATS = [
   { value: '2', label: 'Modes', sub: 'Split & Payout' },
   { value: '4', label: 'Tokens', sub: 'UCT, SOL, BTC, ETH' },
-  { value: '60s', label: 'Agent Loop', sub: 'Fully Autonomous' },
+  { value: '5m', label: 'Agent Loop', sub: 'GitHub Actions' },
   { value: '∞', label: 'Recipients', sub: 'Via CSV or + button' },
 ];
 
@@ -168,7 +168,7 @@ export default function LandingPage() {
           transition={{ delay: 0.7 }}
         >
           Split bills with friends or send bulk payouts to hundreds — with any token, zero manual
-          work. The Astrid agent handles reminders, detection, and settlement{' '}
+          work. The autonomous agent handles reminders, detection, and settlement{' '}
           <span className="text-orange-400 font-semibold">autonomously</span>.
         </motion.p>
 
@@ -324,8 +324,8 @@ export default function LandingPage() {
               },
               {
                 num: '04',
-                title: 'Astrid handles the rest',
-                desc: 'The autonomous agent sends reminders every 24h, detects incoming payments, settles splits, and updates the leaderboard — without any human clicks.',
+                title: 'Agent handles the rest',
+              desc: 'The GitHub Actions agent sends reminders every 24h, detects payments, settles splits, and updates the leaderboard automatically.',
               },
             ].map((step, i) => (
               <motion.div
