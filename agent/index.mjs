@@ -136,6 +136,47 @@ async function updateLeaderboard(split) {
   }
 }
 
+async function processPendingPayouts() {
+  const { data: splits, error } = await supabase
+    .from('splits')
+    .select('*, split_members(*)')
+    .eq('agent_payout_pending', true);
+  if (error) throw error;
+
+  for (const split of splits ?? []) {
+    console.log(`Processing pending payout: ${split.title} (${split.id})`);
+    let allSucceeded = true;
+
+    for (const member of split.split_members) {
+      if (member.paid) continue;
+      try {
+        await agentSphere.payments.send({
+          recipient: member.wallet_address,
+          amount: member.amount_owed.toString(),
+          coinId: split.coin_id,
+        });
+        await supabase.from('split_members').update({
+          paid: true,
+          paid_at: new Date().toISOString(),
+        }).eq('id', member.id);
+        console.log(`Paid ${member.wallet_address}: ${member.amount_owed}`);
+      } catch (err) {
+        allSucceeded = false;
+        console.log(`Payout failed for ${member.wallet_address}: ${err.message}`);
+      }
+    }
+
+    if (allSucceeded) {
+      await supabase.from('splits').update({
+        agent_payout_pending: false,
+        status: 'settled',
+      }).eq('id', split.id);
+      console.log(`Payout complete for split ${split.id}`);
+    }
+  }
+}
+
+
 function formatAmount(baseAmount, symbol) {
   const decimals = { UCT: 18, SOL: 9, BTC: 8, ETH: 18, USDU: 6 }[symbol] ?? 18;
   const divisor = BigInt(10 ** decimals);
@@ -155,6 +196,7 @@ function hoursSince(isoString) {
 async function run() {
   await initAgentWallet();
   console.log(`Agent running at ${new Date().toISOString()}`);
+  await processPendingPayouts();
   const splits = await getOpenSplits();
   console.log(`Found ${splits.length} open splits`);
 
