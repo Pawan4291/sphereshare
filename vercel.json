@@ -4,7 +4,7 @@
   ],
   "functions": {
     "api/agent-run.js": {
-      "includeFiles": "node_modules/@unicitylabs/**"
+      "includeFiles": "node_modules/**"
     }
   }
 }
