@@ -92,7 +92,8 @@ const channel = supabase
   };
 
  const pending = requests.filter((r) => !r.member.paid && !r.member.invalidAddress && r.split.status === 'open');
-  const completed = requests.filter((r) => r.member.paid || r.member.invalidAddress || r.split.status !== 'open');
+  const paidItems = requests.filter((r) => r.member.paid);
+const declinedItems = requests.filter((r) => r.member.invalidAddress);
 
   return (
     <div className="min-h-screen px-4 py-8">
@@ -160,29 +161,49 @@ const channel = supabase
               </div>
             )}
 
-            {completed.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-gray-500 mb-4">Completed / Expired ({completed.length})</h2>
-                <div className="space-y-2">
-                  {completed.map((item) => {
-                    const token = TOKEN_BY_SYMBOL[item.split.tokenSymbol] ?? TOKEN_BY_COIN_ID[item.split.coinId];
-                    return (
-                      <motion.div key={item.member.id} className={`p-4 rounded-xl border flex items-center gap-4 ${item.member.invalidAddress ? 'border-red-500/20 bg-red-500/5' : 'border-green-500/20 bg-green-500/5'}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                        <span className={`text-xl ${item.member.invalidAddress ? 'text-red-400' : 'text-green-400'}`}>
-  {item.member.invalidAddress ? '✕' : '✓'}
-</span>
-                        <div className="flex-1"><span className="text-gray-400 font-medium">{item.split.title}</span><span className="text-gray-600 text-sm ml-2">{formatTokenAmount(item.member.amountOwed, token?.decimals ?? 18)} {item.split.tokenSymbol}</span></div>
-                        <span className="text-xs text-gray-600">
-  {item.member.invalidAddress ? 'Declined' : item.member.paid ? 'Paid' : item.split.status}
-</span>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+           {paidItems.length > 0 && (
+  <div>
+    <h2 className="text-lg font-bold text-green-400 mb-4">Paid ({paidItems.length})</h2>
+    <div className="space-y-2">
+      {paidItems.map((item) => {
+        const token = TOKEN_BY_SYMBOL[item.split.tokenSymbol] ?? TOKEN_BY_COIN_ID[item.split.coinId];
+        return (
+          <motion.div key={item.member.id} className="p-4 rounded-xl border border-green-500/20 bg-green-500/5 flex items-center gap-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <span className="text-xl text-green-400">✓</span>
+            <div className="flex-1">
+              <span className="text-gray-300 font-medium">{item.split.title}</span>
+              {item.member.paidAt && <div className="text-xs text-gray-600 mt-1">{new Date(item.member.paidAt).toLocaleString()}</div>}
+            </div>
+            <span className="text-xs text-green-500">Paid</span>
+          </motion.div>
+        );
+      })}
+    </div>
+  </div>
+)}
 
-            {pending.length === 0 && completed.length === 0 && (
+{declinedItems.length > 0 && (
+  <div>
+    <h2 className="text-lg font-bold text-red-400 mb-4 mt-6">Declined ({declinedItems.length})</h2>
+    <div className="space-y-2">
+      {declinedItems.map((item) => {
+        const token = TOKEN_BY_SYMBOL[item.split.tokenSymbol] ?? TOKEN_BY_COIN_ID[item.split.coinId];
+        return (
+          <motion.div key={item.member.id} className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 flex items-center gap-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <span className="text-xl text-red-400">✕</span>
+            <div className="flex-1">
+              <span className="text-gray-300 font-medium">{item.split.title}</span>
+             {item.member.paidAt && <div className="text-xs text-gray-600 mt-1">{new Date(item.member.paidAt).toLocaleString()}</div>}
+            </div>
+            <span className="text-xs text-red-500">Declined</span>
+          </motion.div>
+        );
+      })}
+    </div>
+  </div>
+)}
+
+            {pending.length === 0 && paidItems.length === 0 && declinedItems.length === 0 && (
               <div className="text-center py-20"><div className="text-6xl mb-4">🎉</div><p className="text-gray-500">No payment requests. You're all settled up!</p></div>
             )}
           </div>

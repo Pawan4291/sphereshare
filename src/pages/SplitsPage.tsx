@@ -86,7 +86,7 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
           </div>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <span className="text-sm font-bold" style={{ color: token?.color ?? '#f97316' }}>{formatTokenAmount(split.totalAmount, token?.decimals ?? 18)} {split.tokenSymbol}</span>
-            <span className="text-xs text-gray-500">{timeAgo(split.createdAt)}</span>
+            <span className="text-xs text-gray-500" title={new Date(split.createdAt).toLocaleString()}>{timeAgo(split.createdAt)} · {new Date(split.createdAt).toLocaleString()}</span>
             {split.deadline && new Date(split.deadline) > new Date() && (
   <span className="text-xs text-yellow-600">⏰ Due {new Date(split.deadline).toLocaleDateString()}</span>
 )}
