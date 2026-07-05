@@ -9,6 +9,35 @@ import { WebSocket } from 'ws';
 globalThis.WebSocket = WebSocket;
 import { createClient } from '@supabase/supabase-js';
 
+
+import { Sphere } from '@unicitylabs/sphere-sdk';
+import { createNodeProviders } from '@unicitylabs/sphere-sdk/impl/nodejs';
+import { createWalletApiProviders } from '@unicitylabs/sphere-sdk/impl/shared/wallet-api';
+
+let agentSphere = null;
+
+async function initAgentWallet() {
+  const base = createNodeProviders({
+    network: 'testnet',
+    oracle: { apiKey: 'sk_ddc3cfcc001e4a28ac3fad7407f99590' },
+  });
+  const providers = createWalletApiProviders(base, {
+    baseUrl: 'https://wallet-api.unicity.network',
+    network: 'testnet2',
+    deviceId: 'sphereshare-agent',
+  });
+  const { sphere, created, generatedMnemonic } = await Sphere.init({
+    ...providers,
+    autoGenerate: true,
+    mnemonic: process.env.AGENT_MNEMONIC || undefined,
+  });
+  if (created && generatedMnemonic) {
+    console.log('NEW AGENT WALLET — SAVE THIS MNEMONIC AS A GITHUB SECRET (AGENT_MNEMONIC):', generatedMnemonic);
+  }
+  agentSphere = sphere;
+}
+
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY // service key for server-side writes
@@ -123,6 +152,7 @@ function hoursSince(isoString) {
 }
 
 async function run() {
+  await initAgentWallet();
   console.log(`Agent running at ${new Date().toISOString()}`);
   const splits = await getOpenSplits();
   console.log(`Found ${splits.length} open splits`);
