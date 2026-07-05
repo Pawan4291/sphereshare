@@ -23,13 +23,31 @@ export default function LeaderboardPage() {
   const [selectedCoinId, setSelectedCoinId] = useState(SUPPORTED_TOKENS[0].coinId);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
- useEffect(() => {
+useEffect(() => {
   const load = async () => {
     const data = await getLeaderboard(selectedCoinId);
     setEntries(data);
   };
   load();
-}, [selectedCoinId, entries.length]);
+  const interval = setInterval(load, 15000);
+
+  let channel: any;
+  import('../lib/storage').then(({ supabase }) => {
+    channel = supabase
+      .channel('leaderboard-sync')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'leaderboard',
+      }, () => load())
+      .subscribe();
+  });
+
+  return () => {
+    clearInterval(interval);
+    channel?.unsubscribe();
+  };
+}, [selectedCoinId]);
 
   const token = SUPPORTED_TOKENS.find((t) => t.coinId === selectedCoinId) ?? SUPPORTED_TOKENS[0];
 
@@ -98,7 +116,7 @@ export default function LeaderboardPage() {
                      <div className="text-xs text-gray-600 mt-0.5">{entry.timesSettled} payment{entry.timesSettled !== 1 ? 's' : ''} made</div>
                     </div>
                     <div><span className="font-bold text-sm" style={{ color: token.color }}>{formatTokenAmount(entry.totalPaid, token.decimals, 4)}</span><span className="text-xs text-gray-600 ml-1">{token.symbol}</span></div>
-                    <div className="text-sm text-gray-400">{entry.fastestPaySeconds !== undefined ? entry.fastestPaySeconds < 60 ? `${entry.fastestPaySeconds}s` : `${Math.floor(entry.fastestPaySeconds / 60)}m` : '—'}</div>
+<div className="text-sm text-gray-400">{entry.fastestPaySeconds != null ? entry.fastestPaySeconds < 60 ? `${entry.fastestPaySeconds}s` : `${Math.floor(entry.fastestPaySeconds / 60)}m` : '—'}</div>
                     <div><ScoreMeter score={entry.reliabilityScore} /></div>
                   </motion.div>
                 ))}

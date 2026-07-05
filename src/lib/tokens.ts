@@ -85,7 +85,11 @@ export function formatTokenAmount(baseAmount: bigint, decimals: number, maxDecim
   const fracPart = baseAmount % divisor;
   if (fracPart === 0n) return intPart.toString();
   const fracStr = fracPart.toString().padStart(decimals, '0');
-  const trimmed = fracStr.slice(0, maxDecimals).replace(/0+$/, '');
+  let trimmed = fracStr.slice(0, maxDecimals).replace(/0+$/, '');
+  if (!trimmed) {
+    // maxDecimals cut off a genuinely non-zero amount — show enough digits to reveal it
+    trimmed = fracStr.replace(/0+$/, '');
+  }
   return trimmed ? `${intPart}.${trimmed}` : intPart.toString();
 }
 
