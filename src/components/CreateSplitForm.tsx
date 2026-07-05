@@ -191,42 +191,24 @@ const human = `${intPart}.${fracPart.toString().padStart(tkn.decimals, '0').slic
       });
       await addMembers(memberData);
 
-   let payoutCancelled = false;
-if (mode === 'payout' && client && !requireApproval) {
-  const { markMemberPaid, getSplitMembers } = await import('../lib/storage');
-  for (const member of memberData) {
-    try {
-      await client.intent('send', {
-        to: member.walletAddress,
-        amount: member.amountOwed.toString(),
-        coinId: token.coinId,
-      });
-      const members = await getSplitMembers(split.id);
-      const m = members.find(x => x.walletAddress === member.walletAddress);
-      if (m) await markMemberPaid(m.id);
-      const { upsertLeaderboard } = await import('../lib/storage');
-await upsertLeaderboard(identity.nametag ?? identity.address, token.coinId, {
-  splitsCreated: 1,
-  totalPaid: member.amountOwed,
-  timesSettled: 1,
-});
-      payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: true }];
-    } catch (payErr: any) {
-      const code = (payErr as { code?: number })?.code;
-      payoutResultsRef.current = [...payoutResultsRef.current, { wallet: member.walletAddress, paid: false }];
-      if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) {
-        payoutCancelled = payoutResultsRef.current.every(r => !r.paid);
-        const { supabase } = await import('../lib/storage');
-await supabase.from('split_members').update({ invalid_address: true }).eq('split_id', split.id).eq('wallet_address', member.walletAddress);
-        break;
-      }
+   if (mode === 'payout' && client && !requireApproval) {
+  try {
+    await client.intent('send', {
+      to: '@sphereshareagent',
+      amount: totalBase.toString(),
+      coinId: token.coinId,
+    });
+    const { supabase } = await import('../lib/storage');
+    await supabase.from('splits').update({ agent_payout_pending: true }).eq('id', split.id);
+  } catch (payErr: any) {
+    const code = (payErr as { code?: number })?.code;
+    if (code === ERROR_CODES.USER_REJECTED || code === ERROR_CODES.INTENT_CANCELLED) {
+      await deleteSplit(split.id);
+      setError('Payout cancelled — no funds were sent.');
+      return;
     }
+    throw payErr;
   }
-}
-if (payoutCancelled) {
-  await deleteSplit(split.id);
-  setError('Payout cancelled — no payments were sent.');
-  return;
 }
 
 setCreatedId(split.id);

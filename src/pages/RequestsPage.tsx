@@ -21,7 +21,7 @@ useEffect(() => {
   if (!identity?.address) return;
   const load = async () => {
     const data = await getMemberSplits(identity.nametag ?? identity.address);
-    setRequests(data);
+    setRequests(data.filter(r => r.split.mode !== 'payout'));
   };
   load();
   const interval = setInterval(load, 15000);
@@ -79,7 +79,7 @@ const channel = supabase
       });
       if (identity?.address) {
         const data = await getMemberSplits(identity?.nametag ?? identity?.address ?? '');
-        setRequests(data);
+        setRequests(data.filter(r => r.split.mode !== 'payout'));
       }
     } catch (err: any) {
       const code = (err as { code?: number })?.code;
@@ -137,20 +137,20 @@ const declinedItems = requests.filter((r) => r.member.invalidAddress)
                           
                         </motion.button>
                         <motion.button
-  onClick={async () => {
+ onClick={async () => {
     await markMemberPaid(item.member.id);
     const data = await getMemberSplits(identity?.nametag ?? identity?.address ?? '');
-    setRequests(data);
+    setRequests(data.filter(r => r.split.mode !== 'payout'));
   }}
   className="px-4 py-3 rounded-xl font-bold text-green-400 border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 flex-shrink-0 text-sm"
   whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
   ✓ Already Paid
 </motion.button>
 <motion.button
-  onClick={async () => {
+ onClick={async () => {
     await markMemberPaid(item.member.id, 'declined');
     const data = await getMemberSplits(identity?.nametag ?? identity?.address ?? '');
-    setRequests(data);
+    setRequests(data.filter(r => r.split.mode !== 'payout'));
   }}
   className="px-4 py-3 rounded-xl font-bold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 flex-shrink-0 text-sm"
   whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
