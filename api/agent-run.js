@@ -17,6 +17,7 @@ async function initAgentWallet() {
   const base = createNodeProviders({
     network: 'testnet',
     oracle: { apiKey: 'sk_ddc3cfcc001e4a28ac3fad7407f99590' },
+    storageDir: '/tmp/sphere-data',
   });
   const providers = createWalletApiProviders(base, {
     baseUrl: 'https://wallet-api.unicity.network',
