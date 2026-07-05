@@ -92,8 +92,10 @@ const channel = supabase
   };
 
  const pending = requests.filter((r) => !r.member.paid && !r.member.invalidAddress && r.split.status === 'open');
-  const paidItems = requests.filter((r) => r.member.paid);
-const declinedItems = requests.filter((r) => r.member.invalidAddress);
+ const paidItems = requests.filter((r) => r.member.paid)
+  .sort((a, b) => new Date(b.member.paidAt ?? 0).getTime() - new Date(a.member.paidAt ?? 0).getTime());
+const declinedItems = requests.filter((r) => r.member.invalidAddress)
+  .sort((a, b) => new Date(b.member.paidAt ?? 0).getTime() - new Date(a.member.paidAt ?? 0).getTime());
 
   return (
     <div className="min-h-screen px-4 py-8">
