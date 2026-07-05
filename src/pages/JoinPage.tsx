@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import WalletConnect from '../components/WalletConnect';
 import { useWallet } from '../context/WalletContext';
-import { getSplit, getSplitMembers, addMember } from '../lib/storage';
+import { getSplit, getSplitMembers, addMember, markMemberPaid } from '../lib/storage';
 import { formatTokenAmount, TOKEN_BY_SYMBOL, TOKEN_BY_COIN_ID } from '../lib/tokens';
-import { getErrorMessage } from '../lib/sphere';
+import { getErrorMessage, ERROR_CODES } from '../lib/sphere';
 import type { Split, SplitMember } from '../types';
 
 export default function JoinPage() {
@@ -16,10 +16,11 @@ export default function JoinPage() {
   const [split, setSplit] = useState<Split | null>(null);
   const [members, setMembers] = useState<SplitMember[]>([]);
   const [showWallet, setShowWallet] = useState(false);
+  const [myMember, setMyMember] = useState<SplitMember | null>(null);
   const [joining, setJoining] = useState(false);
-  const [joined, setJoined] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [done, setDone] = useState<'paid' | 'declined' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [alreadyMember, setAlreadyMember] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -39,7 +40,12 @@ export default function JoinPage() {
     const check = async () => {
       const m = await getSplitMembers(split.id);
       setMembers(m);
-      if (m.find((x) => x.walletAddress === identity.address)) setAlreadyMember(true);
+      const existing = m.find((x) =>
+        x.walletAddress === identity.address ||
+        x.walletAddress === identity.nametag ||
+        x.walletAddress === `@${identity.nametag}`
+      );
+      if (existing) setMyMember(existing);
     };
     check();
   }, [split, identity?.address]);
@@ -48,65 +54,57 @@ export default function JoinPage() {
     if (!split || !identity?.address) return;
     setJoining(true);
     setError(null);
-
     try {
-      let valid = true;
-      if (client) {
-        try {
-          const resolved = await client.query('sphere_resolve', { identifier: identity.address });
-          valid = !!resolved;
-        } catch {
-          valid = true;
-        }
-      }
-
-      if (!valid) {
-        setError('Your wallet address could not be resolved on testnet2.');
-        return;
-      }
-
       const currentMembers = await getSplitMembers(split.id);
       const totalMembers = currentMembers.length + 1;
-      let amountOwed: bigint;
+      const amountOwed = split.distributionType === 'equal'
+        ? split.totalAmount / BigInt(totalMembers)
+        : 0n;
 
-      if (split.distributionType === 'equal') {
-        amountOwed = split.totalAmount / BigInt(totalMembers);
-      } else {
-        amountOwed = 0n;
-      }
-
-      await addMember({
+      const member = await addMember({
         splitId: split.id,
-        walletAddress: identity.address,
+        walletAddress: identity.nametag ?? identity.address,
         amountOwed,
         paid: false,
         reminderCount: 0,
         invalidAddress: false,
         retryCount: 0,
       });
-
-      if (client && amountOwed > 0n) {
-        try {
-          await client.intent('payment_request', {
-            to: identity.address,
-            amount: amountOwed.toString(),
-            coinId: split.coinId,
-            message: `You joined "${split.title}". Your share is due.`,
-          });
-        } catch {
-          // Non-fatal
-        }
-      }
-
-      const updated = await getSplitMembers(split.id);
-      setMembers(updated);
-      setJoined(true);
+      setMyMember(member);
     } catch (err: any) {
       const code = (err as { code?: number })?.code;
-      setError(code ? getErrorMessage(code) : err?.message ?? 'Failed to join split.');
+      setError(code ? getErrorMessage(code) : err?.message ?? 'Failed to join.');
     } finally {
       setJoining(false);
     }
+  };
+
+  const handlePay = async () => {
+    if (!client || !myMember || !split) return;
+    setPaying(true);
+    setError(null);
+    try {
+      await client.intent('send', {
+        to: split.creatorWallet,
+        amount: myMember.amountOwed.toString(),
+        coinId: split.coinId,
+      });
+      await markMemberPaid(myMember.id);
+      setDone('paid');
+    } catch (err: any) {
+      const code = (err as { code?: number })?.code;
+      if (code !== ERROR_CODES.USER_REJECTED && code !== ERROR_CODES.INTENT_CANCELLED) {
+        setError(code ? getErrorMessage(code) : err?.message ?? 'Payment failed.');
+      }
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const handleDecline = async () => {
+    if (!myMember) return;
+    await markMemberPaid(myMember.id, 'declined');
+    setDone('declined');
   };
 
   if (!split) {
@@ -116,59 +114,65 @@ export default function JoinPage() {
         <div className="relative z-10 text-center">
           <div className="text-6xl mb-4">🔍</div>
           <p className="text-gray-400">Split not found or invalid link.</p>
-          <button onClick={() => navigate('/')} className="mt-4 text-orange-400 hover:text-orange-300">
-            Go home →
-          </button>
+          <button onClick={() => navigate('/')} className="mt-4 text-orange-400 hover:text-orange-300">Go home →</button>
         </div>
       </div>
     );
   }
 
   const token = TOKEN_BY_SYMBOL[split.tokenSymbol] ?? TOKEN_BY_COIN_ID[split.coinId];
-  const totalMembers = members.length + (alreadyMember ? 0 : 1);
+  const totalMembers = members.length + (myMember ? 0 : 1);
   const yourShare = split.distributionType === 'equal'
     ? split.totalAmount / BigInt(Math.max(totalMembers, 1))
-    : 0n;
+    : myMember?.amountOwed ?? 0n;
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <AnimatedBackground />
       <div className="relative z-10 w-full max-w-md">
-        <motion.div className="text-center mb-8" initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }}>
+
+        {/* Close button */}
+        <div className="flex justify-end mb-4">
+          <button onClick={() => navigate('/')}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+            ✕
+          </button>
+        </div>
+
+        <motion.div className="text-center mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="text-5xl mb-3">🍕</div>
-          <h1 className="text-3xl font-black text-white">You're invited!</h1>
-          <p className="text-gray-400 mt-2">Join this split on SphereShare</p>
+          <h1 className="text-3xl font-black text-white">Payment Request</h1>
+          <p className="text-gray-400 mt-1 text-sm">from {split.creatorWallet.startsWith('@') ? split.creatorWallet : split.creatorWallet.slice(0, 10) + '...'}</p>
         </motion.div>
 
         <motion.div className="rounded-3xl border border-orange-500/30 overflow-hidden mb-6"
-          style={{ background: 'rgba(15,8,0,0.95)' }} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}>
+          style={{ background: 'rgba(15,8,0,0.95)' }} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
           <div className="h-px bg-gradient-to-r from-transparent via-orange-500 to-transparent" />
           <div className="p-6">
-            <h2 className="text-2xl font-black text-white mb-4">{split.title}</h2>
+            <h2 className="text-xl font-black text-white mb-2">{split.title}</h2>
+
+            {/* Amount */}
+            <div className="text-center py-6">
+              <div className="text-5xl font-black text-orange-400">
+                {formatTokenAmount(yourShare, token?.decimals ?? 18)}
+              </div>
+              <div className="text-gray-400 text-lg mt-1">{split.tokenSymbol}</div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <div className="text-xs text-gray-500 mb-1">Total Amount</div>
-                <div className="font-bold text-orange-400">{formatTokenAmount(split.totalAmount, token?.decimals ?? 18)} {split.tokenSymbol}</div>
-              </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <div className="text-xs text-gray-500 mb-1">Split Type</div>
-                <div className="font-bold text-white capitalize">{split.distributionType}</div>
+                <div className="text-xs text-gray-500 mb-1">Total Split</div>
+                <div className="font-bold text-white text-sm">{formatTokenAmount(split.totalAmount, token?.decimals ?? 18)} {split.tokenSymbol}</div>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                 <div className="text-xs text-gray-500 mb-1">Members</div>
                 <div className="font-bold text-white">{members.length}</div>
               </div>
-              {split.distributionType === 'equal' && (
-                <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20">
-                  <div className="text-xs text-gray-500 mb-1">Your Share</div>
-                  <div className="font-bold text-orange-400">{formatTokenAmount(yourShare, token?.decimals ?? 18)} {split.tokenSymbol}</div>
-                </div>
-              )}
             </div>
 
             {split.status !== 'open' && (
               <div className="mb-4 p-3 rounded-xl bg-gray-500/10 border border-gray-500/20 text-gray-400 text-sm text-center">
-                This split is {split.status}. No new members can join.
+                This split is {split.status}.
               </div>
             )}
 
@@ -178,41 +182,72 @@ export default function JoinPage() {
               </motion.div>
             )}
 
-            {joined || alreadyMember ? (
-              <div className="text-center">
-                <div className="text-4xl mb-3">✅</div>
-                <p className="text-green-400 font-bold mb-4">{joined ? "You've joined the split!" : "You're already in this split."}</p>
-                <button onClick={() => navigate('/requests')} className="px-6 py-3 rounded-xl bg-orange-500 text-black font-bold hover:bg-orange-400 transition-colors">
-                  View in Requests →
-                </button>
+            {/* Done state */}
+            {done === 'paid' && (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-2">✅</div>
+                <p className="text-green-400 font-bold">Payment sent!</p>
+                <button onClick={() => navigate('/')} className="mt-4 text-orange-400 hover:text-orange-300 text-sm">← Back to home</button>
               </div>
-            ) : !connected ? (
+            )}
+
+            {done === 'declined' && (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-2">❌</div>
+                <p className="text-red-400 font-bold">Request declined.</p>
+                <button onClick={() => navigate('/')} className="mt-4 text-orange-400 hover:text-orange-300 text-sm">← Back to home</button>
+              </div>
+            )}
+
+            {/* Not connected */}
+            {!done && !connected && (
               <motion.button onClick={() => setShowWallet(true)}
                 className="w-full py-4 rounded-2xl font-black text-black bg-gradient-to-r from-orange-400 to-orange-600 shadow-lg shadow-orange-500/30"
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                ⚡ Connect Wallet to Join
+                ⚡ Connect Wallet to Pay
               </motion.button>
-            ) : split.status !== 'open' ? null : (
+            )}
+
+            {/* Connected but not joined yet */}
+            {!done && connected && !myMember && split.status === 'open' && (
               <motion.button onClick={handleJoin} disabled={joining}
-                className="w-full py-4 rounded-2xl font-black text-black bg-gradient-to-r from-orange-400 to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-500/30"
+                className="w-full py-4 rounded-2xl font-black text-black bg-gradient-to-r from-orange-400 to-orange-600 disabled:opacity-50 shadow-lg shadow-orange-500/30"
                 whileHover={{ scale: joining ? 1 : 1.02 }} whileTap={{ scale: joining ? 1 : 0.98 }}>
-                {joining ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <motion.div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full"
-                      animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }} />
-                    Joining...
-                  </div>
-                ) : '🍕 Join Split'}
+                {joining ? 'Loading...' : '🍕 View Payment Request'}
               </motion.button>
+            )}
+
+            {/* Joined — show Pay / Decline */}
+            {!done && connected && myMember && !myMember.paid && !myMember.invalidAddress && split.status === 'open' && (
+              <div className="flex gap-3">
+                <motion.button onClick={handleDecline}
+                  className="flex-1 py-4 rounded-2xl font-black text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20"
+                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  ✕ Decline
+                </motion.button>
+                <motion.button onClick={handlePay} disabled={paying}
+                  className="flex-2 flex-1 py-4 rounded-2xl font-black text-black bg-gradient-to-r from-orange-400 to-orange-600 disabled:opacity-50 shadow-lg shadow-orange-500/30"
+                  whileHover={{ scale: paying ? 1 : 1.02 }} whileTap={{ scale: paying ? 1 : 0.98 }}>
+                  {paying ? 'Paying...' : `Pay ${formatTokenAmount(myMember.amountOwed, token?.decimals ?? 18)} ${split.tokenSymbol}`}
+                </motion.button>
+              </div>
+            )}
+
+            {/* Already paid/declined */}
+            {!done && myMember?.paid && (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-2">✅</div>
+                <p className="text-green-400 font-bold">Already paid!</p>
+              </div>
+            )}
+            {!done && myMember?.invalidAddress && (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-2">❌</div>
+                <p className="text-red-400 font-bold">Already declined.</p>
+              </div>
             )}
           </div>
         </motion.div>
-
-        <div className="text-center">
-          <button onClick={() => navigate('/')} className="text-sm text-gray-600 hover:text-gray-400 transition-colors">
-            ← Back to SphereShare
-          </button>
-        </div>
       </div>
       {showWallet && <WalletConnect onClose={() => setShowWallet(false)} />}
     </div>

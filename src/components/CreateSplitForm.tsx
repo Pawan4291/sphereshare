@@ -229,29 +229,7 @@ if (payoutCancelled) {
   return;
 }
 
-let cancelled = false;
-if (mode === 'split' && client) {
-  for (const member of memberData) {
-    try {
-      await client.intent('payment_request', {
-              to: member.walletAddress,
-              amount: member.amountOwed.toString(),
-              coinId: token.coinId,
-              message: `Your share of "${title || 'Group Split'}" — ${(Number(member.amountOwed) / 10 ** token.decimals).toFixed(6)} ${token.symbol}`,
-            });
-          } catch (e: any) {
-  if (e?.code === ERROR_CODES.USER_REJECTED || e?.code === ERROR_CODES.INTENT_CANCELLED) { cancelled = true; break; }
-}
-        }
-      }
-
-     if (!cancelled) {
-  setCreatedId(split.id);
-} else {
-  await deleteSplit(split.id);
-  setCreatedId(null);
-  setError('Split cancelled — no requests were sent.');
-}
+setCreatedId(split.id);
     } catch (err: any) {
       const code = (err as { code?: number })?.code;
       setError(code ? getErrorMessage(code) : err?.message ?? 'Failed to create. Please try again.');
