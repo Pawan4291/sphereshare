@@ -26,8 +26,9 @@ async function initAgentWallet() {
     network: 'testnet2',
     deviceId: 'sphereshare-agent',
   });
-  const { sphere, created, generatedMnemonic } = await Sphere.init({
+ const { sphere, created, generatedMnemonic } = await Sphere.init({
     ...providers,
+    network: 'testnet2',
     autoGenerate: true,
     mnemonic: process.env.AGENT_MNEMONIC || undefined,
   });
