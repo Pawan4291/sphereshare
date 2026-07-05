@@ -56,7 +56,6 @@ export default function JoinPage() {
   setError(null);
   try {
     const currentMembers = await getSplitMembers(split.id);
-    // Find if this wallet was pre-added by creator
     const existing = currentMembers.find((m) =>
       m.walletAddress === identity.address ||
       m.walletAddress === identity.nametag ||
@@ -65,21 +64,7 @@ export default function JoinPage() {
     if (existing) {
       setMyMember(existing);
     } else {
-      // Not pre-added — add with equal share based on original member count
-      const originalCount = currentMembers.length || 1;
-      const amountOwed = split.distributionType === 'equal'
-        ? split.totalAmount / BigInt(originalCount)
-        : 0n;
-      const member = await addMember({
-        splitId: split.id,
-        walletAddress: identity.nametag ?? identity.address,
-        amountOwed,
-        paid: false,
-        reminderCount: 0,
-        invalidAddress: false,
-        retryCount: 0,
-      });
-      setMyMember(member);
+      setError('This split is not for you.');
     }
   } catch (err: any) {
     const code = (err as { code?: number })?.code;
@@ -100,7 +85,8 @@ export default function JoinPage() {
         coinId: split.coinId,
       });
       await markMemberPaid(myMember.id);
-      setDone('paid');
+setDone('paid');
+setTimeout(() => navigate('/requests'), 1500);
     } catch (err: any) {
       const code = (err as { code?: number })?.code;
       if (code !== ERROR_CODES.USER_REJECTED && code !== ERROR_CODES.INTENT_CANCELLED) {
@@ -114,7 +100,8 @@ export default function JoinPage() {
   const handleDecline = async () => {
     if (!myMember) return;
     await markMemberPaid(myMember.id, 'declined');
-    setDone('declined');
+setDone('declined');
+setTimeout(() => navigate('/requests'), 1500);
   };
 
   if (!split) {
