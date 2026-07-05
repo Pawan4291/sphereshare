@@ -51,16 +51,25 @@ export default function JoinPage() {
   }, [split, identity?.address]);
 
   const handleJoin = async () => {
-    if (!split || !identity?.address) return;
-    setJoining(true);
-    setError(null);
-    try {
-      const currentMembers = await getSplitMembers(split.id);
-      const totalMembers = currentMembers.length + 1;
+  if (!split || !identity?.address) return;
+  setJoining(true);
+  setError(null);
+  try {
+    const currentMembers = await getSplitMembers(split.id);
+    // Find if this wallet was pre-added by creator
+    const existing = currentMembers.find((m) =>
+      m.walletAddress === identity.address ||
+      m.walletAddress === identity.nametag ||
+      m.walletAddress === `@${identity.nametag}`
+    );
+    if (existing) {
+      setMyMember(existing);
+    } else {
+      // Not pre-added — add with equal share based on original member count
+      const originalCount = currentMembers.length || 1;
       const amountOwed = split.distributionType === 'equal'
-        ? split.totalAmount / BigInt(totalMembers)
+        ? split.totalAmount / BigInt(originalCount)
         : 0n;
-
       const member = await addMember({
         splitId: split.id,
         walletAddress: identity.nametag ?? identity.address,
@@ -71,13 +80,14 @@ export default function JoinPage() {
         retryCount: 0,
       });
       setMyMember(member);
-    } catch (err: any) {
-      const code = (err as { code?: number })?.code;
-      setError(code ? getErrorMessage(code) : err?.message ?? 'Failed to join.');
-    } finally {
-      setJoining(false);
     }
-  };
+  } catch (err: any) {
+    const code = (err as { code?: number })?.code;
+    setError(code ? getErrorMessage(code) : err?.message ?? 'Failed to join.');
+  } finally {
+    setJoining(false);
+  }
+};
 
   const handlePay = async () => {
     if (!client || !myMember || !split) return;
@@ -122,9 +132,11 @@ export default function JoinPage() {
 
   const token = TOKEN_BY_SYMBOL[split.tokenSymbol] ?? TOKEN_BY_COIN_ID[split.coinId];
   const totalMembers = members.length + (myMember ? 0 : 1);
-  const yourShare = split.distributionType === 'equal'
-    ? split.totalAmount / BigInt(Math.max(totalMembers, 1))
-    : myMember?.amountOwed ?? 0n;
+ const yourShare = myMember?.amountOwed ?? (
+  split.distributionType === 'equal'
+    ? split.totalAmount / BigInt(Math.max(members.length, 1))
+    : 0n
+);
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
