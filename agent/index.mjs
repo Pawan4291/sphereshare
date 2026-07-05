@@ -136,6 +136,8 @@ async function updateLeaderboard(split) {
   }
 }
 
+const MAX_RETRY_ATTEMPTS = 3;
+
 async function processPendingPayouts() {
   const { data: splits, error } = await supabase
     .from('splits')
@@ -145,10 +147,11 @@ async function processPendingPayouts() {
 
   for (const split of splits ?? []) {
     console.log(`Processing pending payout: ${split.title} (${split.id})`);
-    let allSucceeded = true;
+    let refundAmount = 0n;
 
     for (const member of split.split_members) {
-      if (member.paid) continue;
+      if (member.paid || member.invalid_address) continue;
+
       try {
         await agentSphere.payments.send({
           recipient: member.wallet_address,
@@ -161,17 +164,47 @@ async function processPendingPayouts() {
         }).eq('id', member.id);
         console.log(`Paid ${member.wallet_address}: ${member.amount_owed}`);
       } catch (err) {
-        allSucceeded = false;
-        console.log(`Payout failed for ${member.wallet_address}: ${err.message}`);
+        const newRetryCount = (member.retry_count ?? 0) + 1;
+        console.log(`Payout failed for ${member.wallet_address} (attempt ${newRetryCount}): ${err.message}`);
+
+        if (newRetryCount >= MAX_RETRY_ATTEMPTS) {
+          await supabase.from('split_members').update({
+            invalid_address: true,
+            retry_count: newRetryCount,
+          }).eq('id', member.id);
+          refundAmount += BigInt(member.amount_owed);
+          console.log(`Giving up on ${member.wallet_address} after ${newRetryCount} attempts — marked invalid, refunding ${member.amount_owed}`);
+        } else {
+          await supabase.from('split_members').update({
+            retry_count: newRetryCount,
+          }).eq('id', member.id);
+        }
       }
     }
 
-    if (allSucceeded) {
+    const { data: freshMembers } = await supabase
+      .from('split_members').select('*').eq('split_id', split.id);
+    const stillPending = (freshMembers ?? []).some(m => !m.paid && !m.invalid_address);
+
+    if (!stillPending) {
+      if (refundAmount > 0n) {
+        try {
+          await agentSphere.payments.send({
+            recipient: split.creator_wallet,
+            amount: refundAmount.toString(),
+            coinId: split.coin_id,
+          });
+          console.log(`Refunded ${refundAmount} to creator ${split.creator_wallet}`);
+        } catch (refundErr) {
+          console.log(`Refund failed for split ${split.id}: ${refundErr.message}`);
+          continue; // leave agent_payout_pending true, retry refund next run
+        }
+      }
       await supabase.from('splits').update({
         agent_payout_pending: false,
         status: 'settled',
       }).eq('id', split.id);
-      console.log(`Payout complete for split ${split.id}`);
+      console.log(`Payout finished for split ${split.id}`);
     }
   }
 }
