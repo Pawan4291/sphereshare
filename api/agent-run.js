@@ -98,7 +98,9 @@ async function processPendingPayouts() {
 }
 
 export default async function handler(req, res) {
-  if (req.query.secret !== process.env.AGENT_SECRET) {
+  const authHeader = req.headers['authorization'] ?? req.headers['upstash-forward-authorization'] ?? '';
+const secret = authHeader.replace('Bearer ', '') || req.query.secret;
+if (secret !== process.env.AGENT_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
