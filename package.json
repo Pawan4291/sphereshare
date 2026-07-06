@@ -22,6 +22,7 @@
     "react-dom": "19.2.6",
     "react-router-dom": "^7.18.1",
     "tailwind-merge": "3.4.0",
+    "uuid": "^14.0.1",
     "ws": "^8.21.0"
   },
   "devDependencies": {
