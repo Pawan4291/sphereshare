@@ -1,4 +1,5 @@
 import { WebSocket } from 'ws';
+import fs from 'fs';
 globalThis.WebSocket = WebSocket;
 import { createClient } from '@supabase/supabase-js';
 import { Sphere } from '@unicitylabs/sphere-sdk';
@@ -14,14 +15,13 @@ const MAX_RETRY_ATTEMPTS = 3;
 let agentSphere = null;
 
 async function initAgentWallet() {
-  import fs from 'fs';
-fs.mkdirSync('/tmp/sphere-data', { recursive: true });
-fs.mkdirSync('/tmp/sphere-tokens', { recursive: true });
+  fs.mkdirSync('/tmp/sphere-data', { recursive: true });
+  fs.mkdirSync('/tmp/sphere-tokens', { recursive: true });
   const base = createNodeProviders({
     network: 'testnet',
     oracle: { apiKey: 'sk_ddc3cfcc001e4a28ac3fad7407f99590' },
     dataDir: '/tmp/sphere-data',
-tokensDir: '/tmp/sphere-tokens',
+    tokensDir: '/tmp/sphere-tokens',
   });
   const providers = createWalletApiProviders(base, {
     baseUrl: 'https://wallet-api.unicity.network',
@@ -102,8 +102,8 @@ async function processPendingPayouts() {
 
 export default async function handler(req, res) {
   const authHeader = req.headers['authorization'] ?? req.headers['upstash-forward-authorization'] ?? '';
-const secret = authHeader.replace('Bearer ', '') || req.query.secret;
-if (secret !== process.env.AGENT_SECRET) {
+  const secret = authHeader.replace('Bearer ', '') || req.query.secret;
+  if (secret !== process.env.AGENT_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
