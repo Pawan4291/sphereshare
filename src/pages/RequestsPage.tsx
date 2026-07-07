@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '../context/WalletContext';
-import { getMemberSplits, markMemberPaid, recordPayment } from '../lib/storage';
+import { getMemberSplits, markMemberPaid, recordPayment, upsertLeaderboard } from '../lib/storage';
 import { formatTokenAmount, TOKEN_BY_SYMBOL, TOKEN_BY_COIN_ID, shortenAddress } from '../lib/tokens';
 import { getErrorMessage, ERROR_CODES } from '../lib/sphere';
 import { supabase } from '../lib/storage';
@@ -33,27 +33,10 @@ const channel = supabase
     table: 'split_members',
   }, () => load())
   .subscribe();
-  // When payment comes in from wallet — mark paid in Supabase
-  const unsubIncoming = client?.on('transfer:incoming', async (data: any) => {
-    // Find matching pending member and mark paid
-    const pending = requests.filter(r => !r.member.paid);
-    for (const item of pending) {
-      if (data?.coinId === item.split.coinId) {
-        await markMemberPaid(item.member.id);
-        await import('../lib/storage').then(({ upsertLeaderboard }) => 
-  upsertLeaderboard(identity?.address ?? '', item.split.coinId, {
-    totalPaid: item.member.amountOwed,
-    timesSettled: 1,
-  })
-);
-      }
-    }
-    load();
-  });
+  
 
   return () => {
   clearInterval(interval);
-  unsubIncoming?.();
   channel.unsubscribe();
 };
 }, [identity?.address, client]);
@@ -76,6 +59,10 @@ const channel = supabase
         coinId: item.split.coinId,
         amount: item.member.amountOwed,
         txnHash: (result as any)?.txnHash ?? (result as any)?.hash ?? undefined,
+      });
+      await upsertLeaderboard(identity?.address ?? '', item.split.coinId, {
+        totalPaid: item.member.amountOwed,
+        timesSettled: 1,
       });
       if (identity?.address) {
         const data = await getMemberSplits(identity?.nametag ?? identity?.address ?? '');
