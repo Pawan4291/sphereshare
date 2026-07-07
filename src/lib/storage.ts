@@ -210,17 +210,46 @@ function rowToPayment(row: any): Payment {
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
 export async function upsertLeaderboard(
-  walletAddress: string, coinId: string,
-  delta: Partial<{ totalPaid: bigint; fastestPaySeconds: number; timesSettled: number }>
+  walletAddress: string,
+  coinId: string,
+  delta: Partial<{
+    splitsCreated: number;
+    totalPaid: bigint;
+    fastestPaySeconds: number;
+    timesSettled: number;
+    reliabilityScore: number;
+  }>
 ): Promise<void> {
-  const { error } = await supabase.rpc('increment_leaderboard', {
-    p_wallet: walletAddress,
-    p_coin: coinId,
-    p_total_paid: (delta.totalPaid ?? 0n).toString(),
-    p_times_settled: delta.timesSettled ?? 0,
-    p_fastest: delta.fastestPaySeconds ?? null,
-  });
-  if (error) throw error;
+  const { data: existing } = await supabase
+    .from('leaderboard').select('*')
+    .eq('wallet_address', walletAddress).eq('coin_id', coinId).single();
+
+  if (!existing) {
+    await supabase.from('leaderboard').insert({
+      id: genId(),
+      wallet_address: walletAddress,
+      coin_id: coinId,
+      splits_created: delta.splitsCreated ?? 0,
+     total_paid: (delta.totalPaid ?? 0n).toString(),
+      fastest_pay_seconds: delta.fastestPaySeconds ?? null,
+      times_settled: delta.timesSettled ?? 0,
+      reliability_score: delta.reliabilityScore ?? 100,
+      updated_at: new Date().toISOString(),
+    });
+  } else {
+    const updates: any = { updated_at: new Date().toISOString() };
+    if (delta.splitsCreated) updates.splits_created = existing.splits_created + delta.splitsCreated;
+   if (delta.totalPaid) updates.total_paid = (BigInt(existing.total_paid) + delta.totalPaid).toString();
+    if (delta.fastestPaySeconds !== undefined) {
+      if (!existing.fastest_pay_seconds || delta.fastestPaySeconds < existing.fastest_pay_seconds) {
+        updates.fastest_pay_seconds = delta.fastestPaySeconds;
+      }
+    }
+    if (delta.timesSettled) updates.times_settled = existing.times_settled + delta.timesSettled;
+    if (delta.reliabilityScore !== undefined) updates.reliability_score = delta.reliabilityScore;
+    await supabase.from('leaderboard').update(updates)
+      .eq('wallet_address', walletAddress).eq('coin_id', coinId);
+  }
 }
 
 export async function getLeaderboard(coinId?: string): Promise<LeaderboardEntry[]> {
