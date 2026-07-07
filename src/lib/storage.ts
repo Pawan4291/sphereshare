@@ -22,7 +22,7 @@ export async function createSplit(data: Omit<Split, 'id' | 'createdAt'>): Promis
     title: data.title,
     coin_id: data.coinId,
     token_symbol: data.tokenSymbol,
-    total_amount: Number(data.totalAmount),
+   total_amount: data.totalAmount.toString(),
     distribution_type: data.distributionType,
     creator_wallet: data.creatorWallet,
     deadline: data.deadline,
@@ -89,7 +89,7 @@ export async function addMember(data: Omit<SplitMember, 'id'>): Promise<SplitMem
     id: genId(),
     split_id: data.splitId,
     wallet_address: data.walletAddress,
-   amount_owed: Number(data.amountOwed),
+   amount_owed: data.amountOwed.toString(),
     paid: false,
     reminder_count: 0,
     invalid_address: false,
@@ -178,7 +178,7 @@ export async function recordPayment(data: Omit<Payment, 'id' | 'createdAt'>): Pr
     from_wallet: data.fromWallet,
     to_wallet: data.toWallet,
     coin_id: data.coinId,
-    amount: Number(data.amount),
+    amount: data.amount.toString(),
     txn_hash: data.txnHash,
     receipt_signature: data.receiptSignature,
     created_at: new Date().toISOString(),
@@ -230,7 +230,7 @@ export async function upsertLeaderboard(
       wallet_address: walletAddress,
       coin_id: coinId,
       splits_created: delta.splitsCreated ?? 0,
-     total_paid: Number(delta.totalPaid ?? 0n),
+     total_paid: (delta.totalPaid ?? 0n).toString(),
       fastest_pay_seconds: delta.fastestPaySeconds ?? null,
       times_settled: delta.timesSettled ?? 0,
       reliability_score: delta.reliabilityScore ?? 100,
@@ -239,7 +239,7 @@ export async function upsertLeaderboard(
   } else {
     const updates: any = { updated_at: new Date().toISOString() };
     if (delta.splitsCreated) updates.splits_created = existing.splits_created + delta.splitsCreated;
-   if (delta.totalPaid) updates.total_paid = Number(existing.total_paid) + Number(delta.totalPaid);
+   if (delta.totalPaid) updates.total_paid = (BigInt(existing.total_paid) + delta.totalPaid).toString();
     if (delta.fastestPaySeconds !== undefined) {
       if (!existing.fastest_pay_seconds || delta.fastestPaySeconds < existing.fastest_pay_seconds) {
         updates.fastest_pay_seconds = delta.fastestPaySeconds;

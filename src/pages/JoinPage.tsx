@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import WalletConnect from '../components/WalletConnect';
 import { useWallet } from '../context/WalletContext';
-import { getSplit, getSplitMembers, addMember, markMemberPaid } from '../lib/storage';
+import { getSplit, getSplitMembers, addMember, markMemberPaid, recordPayment, upsertLeaderboard } from '../lib/storage';
 import { formatTokenAmount, TOKEN_BY_SYMBOL, TOKEN_BY_COIN_ID } from '../lib/tokens';
 import { getErrorMessage, ERROR_CODES } from '../lib/sphere';
 import type { Split, SplitMember } from '../types';
@@ -85,6 +86,17 @@ export default function JoinPage() {
         coinId: split.coinId,
       });
       await markMemberPaid(myMember.id);
+      await recordPayment({
+  splitId: split.id,
+  fromWallet: identity?.address ?? '',
+  toWallet: split.creatorWallet,
+  coinId: split.coinId,
+  amount: myMember.amountOwed,
+});
+await upsertLeaderboard(identity?.address ?? '', split.coinId, {
+  totalPaid: myMember.amountOwed,
+  timesSettled: 1,
+});
 setDone('paid');
 setTimeout(() => navigate('/requests'), 1500);
     } catch (err: any) {
