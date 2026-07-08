@@ -16,8 +16,8 @@ const FEATURES = [
   },
   {
     icon: '🤖',
-    title: 'GitHub Agent',
-    desc: 'Automated agent runs every 5 minutes — sends reminders, detects payments, and settles splits.',
+    title: 'Autonomous Agent',
+    desc: 'Automated agent runs every 2 minutes — sends reminders, detects payments, and settles splits.',
     gradient: 'from-orange-400/20 to-transparent',
   },
   {
@@ -49,7 +49,7 @@ const FEATURES = [
 const STATS = [
   { value: '2', label: 'Modes', sub: 'Split & Payout' },
   { value: '4', label: 'Tokens', sub: 'UCT, SOL, BTC, ETH' },
-  { value: '5m', label: 'Agent Loop', sub: 'GitHub Actions' },
+  { value: '2m', label: 'Agent Loop', sub: 'Automated' },
   { value: '∞', label: 'Recipients', sub: 'Via CSV or + button' },
 ];
 
@@ -325,7 +325,7 @@ export default function LandingPage() {
               {
                 num: '04',
                 title: 'Agent handles the rest',
-              desc: 'The GitHub Actions agent sends reminders every 24h, detects payments, settles splits, and updates the leaderboard automatically.',
+              desc: 'The autonomous agent sends reminders every 24h, detects payments, settles splits, and updates the leaderboard automatically.',
               },
             ].map((step, i) => (
               <motion.div
