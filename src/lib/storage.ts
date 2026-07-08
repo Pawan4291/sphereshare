@@ -209,8 +209,12 @@ function rowToPayment(row: any): Payment {
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
+function normalizeWallet(w: string): string {
+  return w.startsWith('@') ? w : `@${w}`;
+}
+
 export async function upsertLeaderboard(
-  walletAddress: string,
+  walletAddressRaw: string,
   coinId: string,
   delta: Partial<{
     splitsCreated: number;
@@ -220,6 +224,7 @@ export async function upsertLeaderboard(
     reliabilityScore: number;
   }>
 ): Promise<void> {
+  const walletAddress = normalizeWallet(walletAddressRaw);
   const { data: existing } = await supabase
     .from('leaderboard').select('*')
     .eq('wallet_address', walletAddress).eq('coin_id', coinId).single();

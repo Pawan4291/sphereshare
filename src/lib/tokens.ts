@@ -47,15 +47,7 @@ export const SUPPORTED_TOKENS: TokenInfo[] = [
     color: '#627EEA',
     bgColor: 'rgba(98,126,234,0.15)',
   },
-  {
-    symbol: 'USDU',
-    name: 'Unicity USD',
-    coinId: 'e210f98956f564bfe67ee94fddd386b5157f660d1957169b391f962093a2da2a',
-    decimals: 6,
-    logoUrl: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
-    color: '#26A17B',
-    bgColor: 'rgba(38,161,123,0.15)',
-  },
+  
 ];
 
 export const TOKEN_BY_COIN_ID: Record<string, TokenInfo> = Object.fromEntries(
