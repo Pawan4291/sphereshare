@@ -60,6 +60,30 @@ async function processPendingPayouts() {
           paid: true,
           paid_at: new Date().toISOString(),
         }).eq('id', member.id);
+
+        const creatorWallet = split.creator_wallet.startsWith('@') ? split.creator_wallet : `@${split.creator_wallet}`;
+        const { data: existing } = await supabase
+          .from('leaderboard').select('*')
+          .eq('wallet_address', creatorWallet).eq('coin_id', split.coin_id).single();
+
+        if (!existing) {
+          await supabase.from('leaderboard').insert({
+            id: crypto.randomUUID(),
+            wallet_address: creatorWallet,
+            coin_id: split.coin_id,
+            splits_created: 0,
+            total_paid: member.amount_owed,
+            times_settled: 1,
+            reliability_score: 100,
+            updated_at: new Date().toISOString(),
+          });
+        } else {
+          await supabase.from('leaderboard').update({
+            total_paid: (BigInt(existing.total_paid) + BigInt(member.amount_owed)).toString(),
+            times_settled: existing.times_settled + 1,
+            updated_at: new Date().toISOString(),
+          }).eq('wallet_address', creatorWallet).eq('coin_id', split.coin_id);
+        }
       } catch (err) {
         const newRetryCount = (member.retry_count ?? 0) + 1;
         if (newRetryCount >= MAX_RETRY_ATTEMPTS) {
