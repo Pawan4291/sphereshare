@@ -93,7 +93,7 @@ export default function JoinPage() {
   coinId: split.coinId,
   amount: myMember.amountOwed,
 });
-await upsertLeaderboard(identity?.address ?? '', split.coinId, {
+await upsertLeaderboard(identity?.nametag ?? identity?.address ?? '', split.coinId, {
   totalPaid: myMember.amountOwed,
   timesSettled: 1,
 });
