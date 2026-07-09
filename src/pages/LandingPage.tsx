@@ -90,7 +90,7 @@ export default function LandingPage() {
       >
         {/* Logo */}
         <motion.div
-          className="mb-8"
+          className="mb-8 mt-8"
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: 'spring', damping: 15, stiffness: 200, delay: 0.2 }}
