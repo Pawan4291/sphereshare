@@ -60,7 +60,12 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
   const paidCount = members.filter((m) => m.paid).length;
   const shareUrl = `${window.location.origin}/join/${split.id}`;
 
-  const handleExport = () => {
+ const handleExport = () => {
+    const isInIframe = window.self !== window.top;
+    if (isInIframe) {
+      alert('Downloads are blocked inside this embedded preview. Please open sphereshare.vercel.app in a regular browser tab to export.');
+      return;
+    }
     const rows = members.map((m) => ({
       wallet: m.walletAddress, amount: formatTokenAmount(m.amountOwed, token?.decimals ?? 18),
       token: split.tokenSymbol, txn_hash: '',
