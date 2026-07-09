@@ -61,18 +61,7 @@ async function processPendingPayouts() {
           paid_at: new Date().toISOString(),
         }).eq('id', member.id);
 
-        // Update leaderboard with member's nametag
-const walletKey = member.wallet_address.startsWith('@') 
-  ? member.wallet_address 
-  : member.wallet_address;
-await supabase.from('leaderboard').upsert({
-  wallet_address: walletKey,
-  coin_id: split.coin_id,
-  total_paid: member.amount_owed,
-  times_settled: 1,
-  reliability_score: 100,
-  updated_at: new Date().toISOString(),
-}, { onConflict: 'wallet_address,coin_id' });
+      
 
         const creatorWallet = split.creator_wallet.startsWith('@') ? split.creator_wallet : `@${split.creator_wallet}`;
         const { data: existing } = await supabase
