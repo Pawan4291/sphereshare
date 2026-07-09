@@ -61,11 +61,11 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
   const shareUrl = `${window.location.origin}/join/${split.id}`;
 
   const handleExport = () => {
-    const rows = payments.map((p) => ({
-      wallet: p.toWallet, amount: formatTokenAmount(p.amount, token?.decimals ?? 18),
-      token: split.tokenSymbol, txn_hash: p.txnHash ?? '',
-      status: members.find((m) => m.walletAddress === p.toWallet)?.paid ? 'paid' : 'pending',
-      timestamp: new Date(p.createdAt).toISOString(),
+    const rows = members.map((m) => ({
+      wallet: m.walletAddress, amount: formatTokenAmount(m.amountOwed, token?.decimals ?? 18),
+      token: split.tokenSymbol, txn_hash: '',
+      status: m.paid ? 'paid' : m.invalidAddress ? 'declined' : 'pending',
+      timestamp: m.paidAt ? new Date(m.paidAt).toISOString() : '',
     }));
     const csv = generateExportCSV(rows, split.title);
     downloadCSV(csv, `sphereshare-${split.id.slice(0, 8)}.csv`);
