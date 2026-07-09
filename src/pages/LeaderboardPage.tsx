@@ -60,7 +60,7 @@ useEffect(() => {
           </h1>
           <div className="flex items-center justify-center gap-3">
   <p className="text-gray-400">Top payers per token : never summed across tokens.</p>
-  <motion.button onClick={() => setEntries([])} className="px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-xs font-semibold border border-orange-500/30 hover:bg-orange-500/30" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>↻ Refresh</motion.button>
+ <motion.button onClick={async () => { const data = await getLeaderboard(selectedCoinId); setEntries(data); }} className="px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-xs font-semibold border border-orange-500/30 hover:bg-orange-500/30" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>↻ Refresh</motion.button>
 </div>
         </motion.div>
 
