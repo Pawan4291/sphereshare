@@ -45,7 +45,7 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
   if (!expanded) return;
   const interval = setInterval(load, 15000);
   const channel = supabase
-  .channel('splits-sync')
+  .channel(`splits-sync-${split.id}`)
   .on('postgres_changes', {
     event: 'UPDATE',
     schema: 'public',
