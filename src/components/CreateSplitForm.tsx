@@ -166,7 +166,7 @@ const human = `${intPart}.${fracPart.toString().padStart(tkn.decimals, '0').slic
         tokenSymbol: token.symbol,
         totalAmount: totalBase,
         distributionType: distribution,
-        creatorWallet: identity.address,
+       creatorWallet: identity.nametag ? `@${identity.nametag}` : identity.address,
         deadline: deadline || undefined,
         status: 'open',
         requireApproval,
