@@ -46,9 +46,12 @@ export async function getSplit(id: string): Promise<Split | null> {
 }
 
 export async function getUserSplits(walletAddress: string): Promise<Split[]> {
+  const withAt = walletAddress.startsWith('@') ? walletAddress : `@${walletAddress}`;
+  const withoutAt = walletAddress.startsWith('@') ? walletAddress.slice(1) : walletAddress;
+
   const { data, error } = await supabase
     .from('splits').select('*')
-    .eq('creator_wallet', walletAddress)
+    .in('creator_wallet', [walletAddress, withAt, withoutAt])
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(rowToSplit);

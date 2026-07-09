@@ -181,11 +181,11 @@ export default function SplitsPage() {
   useEffect(() => {
     if (!identity?.address) return;
     const load = async () => {
-      const data = await getUserSplits(identity.address);
+      const data = await getUserSplits(identity.nametag ? `@${identity.nametag}` : identity.address);
       setSplits(data);
     };
     load();
-  }, [identity?.address]);
+  }, [identity?.address, identity?.nametag]);
 
   const filtered = splits.filter((s) => filter === 'all' || s.mode === filter);
 
