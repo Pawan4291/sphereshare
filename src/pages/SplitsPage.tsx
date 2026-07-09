@@ -60,12 +60,7 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
   const paidCount = members.filter((m) => m.paid).length;
   const shareUrl = `${window.location.origin}/join/${split.id}`;
 
- const handleExport = () => {
-    const isInIframe = window.self !== window.top;
-    if (isInIframe) {
-      alert('Downloads are blocked inside this embedded preview. Please open sphereshare.vercel.app in a regular browser tab to export.');
-      return;
-    }
+  const handleExport = () => {
     const rows = members.map((m) => ({
       wallet: m.walletAddress, amount: formatTokenAmount(m.amountOwed, token?.decimals ?? 18),
       token: split.tokenSymbol, txn_hash: '',
@@ -169,6 +164,9 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
 <motion.button onClick={handleExport}
   className="px-4 py-2 rounded-xl bg-white/5 text-gray-400 text-xs font-semibold border border-white/10 hover:bg-white/10"
   whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📄 Export CSV</motion.button>
+{window.self !== window.top && (
+  <span className="text-xs text-gray-600 self-center">(open in browser tab to download)</span>
+)}
 </div>
             </div>
           </motion.div>
