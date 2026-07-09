@@ -97,7 +97,7 @@ export default function LandingPage() {
         >
           <div className="relative inline-block">
             <motion.div
-              className="w-24 h-24 rounded-3xl bg-gradient-to-br from-orange-400 to-orange-700 flex items-center justify-center shadow-2xl shadow-orange-500/40"
+              className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl shadow-orange-500/40"
               animate={{
                 boxShadow: [
                   '0 0 40px rgba(255,107,0,0.3)',
@@ -107,7 +107,7 @@ export default function LandingPage() {
               }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <span className="text-5xl">⬡</span>
+              <img src="/logo.png" alt="SphereShare" className="w-full h-full object-cover" />
             </motion.div>
             <motion.div
               className="absolute -inset-2 rounded-3xl border-2 border-orange-500/30"

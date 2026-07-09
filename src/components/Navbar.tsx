@@ -37,17 +37,7 @@ export default function Navbar() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
             >
-              <div className="relative w-8 h-8">
-                <motion.div
-                  className="absolute inset-0 rounded-full bg-orange-500"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                  style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
-                />
-                <div className="absolute inset-1 rounded-full bg-black flex items-center justify-center">
-                  <span className="text-orange-400 text-xs font-black">S</span>
-                </div>
-              </div>
+              <img src="/logo.png" alt="SphereShare" className="w-8 h-8 rounded-lg" />
               <span className="font-black text-white text-lg tracking-tight">
                 Sphere<span className="text-orange-500">Share</span>
               </span>
