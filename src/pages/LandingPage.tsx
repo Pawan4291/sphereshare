@@ -382,8 +382,8 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="relative z-10 py-8 px-4 border-t border-orange-500/10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-gray-600 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-orange-500">⬡</span>
+         <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="SphereShare" className="w-5 h-5 rounded" />
             <span>SphereShare — Built on Unicity Sphere testnet2</span>
           </div>
           <div className="flex items-center gap-6">
@@ -403,14 +403,7 @@ export default function LandingPage() {
             >
               Docs
             </a>
-            <a
-              href="https://faucet.unicity.network/faucet/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-400 transition-colors"
-            >
-              Faucet
-            </a>
+            
           </div>
         </div>
       </footer>
