@@ -134,6 +134,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { count, error } = await supabase
+      .from('splits')
+      .select('*', { count: 'exact', head: true })
+      .eq('agent_payout_pending', true);
+    if (error) throw error;
+
+    if (!count) {
+      return res.status(200).json({ ok: true, skipped: true, ranAt: new Date().toISOString() });
+    }
+
     await initAgentWallet();
     await processPendingPayouts();
     res.status(200).json({ ok: true, ranAt: new Date().toISOString() });
