@@ -254,7 +254,18 @@ setCreatedId(split.id);
             <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10">
               <span className="text-orange-300 text-sm flex-1 truncate font-mono">{shareUrl}</span>
               <motion.button
-                onClick={() => navigator.clipboard.writeText(shareUrl)}
+                onClick={() => {
+  try {
+    navigator.clipboard.writeText(shareUrl);
+  } catch {
+    const el = document.createElement('textarea');
+    el.value = shareUrl;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  }
+}}
                 className="px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-xs font-medium hover:bg-orange-500/30 transition-colors flex-shrink-0"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
