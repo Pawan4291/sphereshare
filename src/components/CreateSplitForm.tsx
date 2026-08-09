@@ -255,15 +255,18 @@ setCreatedId(split.id);
               <span className="text-orange-300 text-sm flex-1 truncate font-mono">{shareUrl}</span>
               <motion.button
                 onClick={() => {
-  try {
-    navigator.clipboard.writeText(shareUrl);
-  } catch {
+  const fallbackCopy = () => {
     const el = document.createElement('textarea');
     el.value = shareUrl;
     document.body.appendChild(el);
     el.select();
-    document.execCommand('copy');
+    try { document.execCommand('copy'); } catch {}
     document.body.removeChild(el);
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(shareUrl).catch(fallbackCopy);
+  } else {
+    fallbackCopy();
   }
 }}
                 className="px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-xs font-medium hover:bg-orange-500/30 transition-colors flex-shrink-0"
