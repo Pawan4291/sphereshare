@@ -133,7 +133,18 @@ function SplitCard({ split, onRemove }: { split: Split; onRemove: (id: string) =
               )}
               <div className="flex gap-2 flex-wrap">
                 {split.mode === 'split' && (
-                  <motion.button onClick={() => navigator.clipboard.writeText(shareUrl)}
+                  <motion.button onClick={() => {
+                    try {
+                      navigator.clipboard.writeText(shareUrl);
+                    } catch {
+                      const el = document.createElement('textarea');
+                      el.value = shareUrl;
+                      document.body.appendChild(el);
+                      el.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(el);
+                    }
+                  }}
                     className="px-4 py-2 rounded-xl bg-orange-500/15 text-orange-400 text-xs font-semibold border border-orange-500/20 hover:bg-orange-500/25"
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>📋 Copy Join Link</motion.button>
                 )}
